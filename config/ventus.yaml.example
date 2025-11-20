@@ -1,0 +1,36 @@
+# Ventus Configuration Example
+#
+# Copy this file to one of:
+#   - ~/.config/ventus/ventus.yaml (user config)
+#   - /etc/ventus/ventus.yaml (system config)
+#
+# Then customize for your hardware setup.
+
+# I2C bus configuration
+i2c:
+  bus: 0                    # I2C bus number
+  lock_enabled: true        # Enable cross-process locking
+  lock_timeout: 5.0         # Lock timeout in seconds
+  lock_path: "/var/lock"    # Lock file directory
+
+# Fan controller devices
+devices:
+  fan1:
+    name: "CPU Fan"
+    address: 0x2F           # I2C device address
+    enabled: true
+    min_speed: 0            # Minimum speed (0-100%)
+    max_speed: 100          # Maximum speed (0-100%)
+    default_speed: 50       # Default speed at startup
+
+  fan2:
+    name: "Chassis Fan"
+    address: 0x4C
+    enabled: true
+    min_speed: 0
+    max_speed: 100
+    default_speed: 40
+
+# Global settings
+log_level: "INFO"           # DEBUG, INFO, WARNING, ERROR
+auto_start: false           # Auto-start on system boot
