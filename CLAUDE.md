@@ -83,7 +83,7 @@ pip3 install -e ".[dev]"
 - **Implementation**: File-based advisory locks using `filelock` library
 - **Lock file**: `/var/lock/i2c-[bus].lock` (configurable)
 - **Timeout**: 5 seconds (default, configurable)
-- **Wraps every I2C read/write operation** in `ventus/driver/i2c.py`
+- **Wraps every I2C read/write operation** in `emc2305/driver/i2c.py`
 
 **2. Thread Safety**
 - Device-level locks for concurrent access
@@ -104,13 +104,13 @@ pip3 install -e ".[dev]"
 ## Important Files
 
 ### Core Hardware Interface
-- `ventus/driver/i2c.py` - Low-level I2C communication with cross-process bus locking
-- `ventus/driver/[chip].py` - Main fan controller driver (chip-specific)
-- `ventus/driver/constants.py` - Hardware constants (addresses, registers, timing)
+- `emc2305/driver/i2c.py` - Low-level I2C communication with cross-process bus locking
+- `emc2305/driver/[chip].py` - Main fan controller driver (chip-specific)
+- `emc2305/driver/constants.py` - Hardware constants (addresses, registers, timing)
 
 ### Configuration
-- `ventus/settings.py` - Configuration dataclasses and file loading
-- `config/ventus.yaml` - Default configuration template
+- `emc2305/settings.py` - Configuration dataclasses and file loading
+- `config/emc2305.yaml` - Default configuration template
 
 ### Documentation
 - `docs/hardware/` - Datasheets, schematics, integration guides
@@ -127,21 +127,21 @@ pip3 install -e ".[dev]"
 ### I2C Bus Sharing
 - **Multiple services may use the same I2C bus** - always use I2C locking
 - Follow the pattern established in the luminex project
-- See `ventus/driver/i2c.py` for implementation reference
+- See `emc2305/driver/i2c.py` for implementation reference
 
 ## Common Patterns
 
 ### Adding New Features
 
-1. **New I2C register operations**: Add to appropriate driver file in `ventus/driver/`
-2. **New configuration options**: Add to `ventus/settings.py` with validation
+1. **New I2C register operations**: Add to appropriate driver file in `emc2305/driver/`
+2. **New configuration options**: Add to `emc2305/settings.py` with validation
 3. **New examples**: Add to `examples/python/` with clear documentation
 4. **New tests**: Add to `tests/` following existing test patterns
 
 ### Working with I2C
 
 ```python
-from ventus.driver.i2c import I2CBus
+from emc2305.driver.i2c import I2CBus
 
 # Initialize I2C bus with locking
 bus = I2CBus(bus_number=0, lock_enabled=True)
@@ -277,7 +277,7 @@ Some devices require specific I2C bus speeds. Configure via device tree or kerne
 ## Hardware Integration Notes
 
 ### I2C Communication
-- Always use the I2C locking mechanism from `ventus/driver/i2c.py`
+- Always use the I2C locking mechanism from `emc2305/driver/i2c.py`
 - Handle I2C timeouts and retry logic
 - Validate register addresses and values
 - Check device presence before operations
@@ -307,7 +307,7 @@ This project follows patterns established in:
 i2cdetect -y 0
 
 # Test basic communication
-python3 -m ventus.driver.test_basic
+python3 -m emc2305.driver.test_basic
 
 # Run examples
 python3 examples/python/test_fan_control.py
@@ -317,8 +317,8 @@ pip3 install -e .
 ```
 
 ### Configuration Locations
-- **User config**: `~/.config/ventus/ventus.yaml`
-- **System config**: `/etc/ventus/ventus.yaml`
+- **User config**: `~/.config/emc2305/emc2305.yaml`
+- **System config**: `/etc/emc2305/emc2305.yaml`
 - **Lock files**: `/var/lock/i2c-*.lock`
 
 ## Summary for AI Assistants
