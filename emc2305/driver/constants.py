@@ -97,8 +97,8 @@ REG_PWM_OUTPUT_CONFIG = 0x2B
 DEFAULT_PWM_POLARITY = 0x00
 """Default PWM polarity configuration (normal/non-inverted for all channels)"""
 
-DEFAULT_PWM_OUTPUT_CONFIG = 0x00
-"""Default PWM output configuration (push-pull for all channels)"""
+DEFAULT_PWM_OUTPUT_CONFIG = 0x1F
+"""Default PWM output configuration (open-drain for all channels) - Recommended by electronics engineer for better signal integrity"""
 
 FAN_INTERRUPT_ENABLE_ALL_FANS = 0x1F
 """Enable interrupts for all 5 fan channels (bits 4-0 set)"""
