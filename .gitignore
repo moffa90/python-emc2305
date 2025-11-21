@@ -57,3 +57,7 @@ htmlcov/
 
 # Deployment
 *.tar.gz
+
+# Debug sessions - hardware-specific debugging documentation
+debug-sessions/*/
+!debug-sessions/README.md
