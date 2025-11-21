@@ -6,11 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Cellgain Ventus** - Production-ready I2C fan controller system for embedded Linux platforms. Provides fan speed control, RPM monitoring, and temperature sensing capabilities.
 
-**Hardware:** [TBD - Add board name and specifications]
+**Hardware:**
+- **Board:** CGW-LED-FAN-CTRL-4-REV1
+- **Controller:** EMC2305-1-APTR (5-channel PWM fan controller)
+- **I2C Address:** 0x4D (default)
+- **Power Rails:** 3.3V (EMC2305 VDD), 5V (Fan power)
 
 **Target Platform:** Multiplatform Linux (Banana Pi, Raspberry Pi, generic Linux systems with I2C support)
 
-**Current Phase:** Phase 1 - Core Driver Development
+**Current Phase:** Phase 1 - Core Driver Development (Completed with critical fixes)
 
 ## Development Commands
 
@@ -128,6 +132,41 @@ pip3 install -e ".[dev]"
 - **Multiple services may use the same I2C bus** - always use I2C locking
 - Follow the pattern established in the luminex project
 - See `emc2305/driver/i2c.py` for implementation reference
+
+## Critical EMC2305 Configuration Requirements
+
+⚠️ **IMPORTANT**: The following configuration settings are MANDATORY for EMC2305 to function correctly:
+
+### 1. GLBL_EN Bit (Register 0x20, Bit 1) - CRITICAL
+**Without this bit enabled, ALL PWM outputs are disabled regardless of individual fan settings.**
+
+This is now automatically enabled in driver initialization (`emc2305/driver/emc2305.py:231-234`).
+
+### 2. UPDATE_TIME - Must be 200ms
+**Using 500ms breaks PWM control completely.**
+
+Default is now correctly set to 200ms (`emc2305/driver/constants.py:589`, `emc2305/driver/emc2305.py:58`).
+
+### 3. Drive Fail Band Registers - Corrected Addresses
+**Some datasheets have incorrect register addresses.**
+
+- `REG_FAN1_DRIVE_FAIL_BAND_LOW = 0x3A` (NOT 0x3B)
+- `REG_FAN1_DRIVE_FAIL_BAND_HIGH = 0x3B` (NOT 0x3C)
+
+### 4. PWM Voltage Levels - Hardware Consideration
+⚠️ **EMC2305 outputs 3.3V PWM logic (VDD = 3.3V)**
+
+If using 5V PWM fans, a hardware level shifter circuit is required (MOSFET-based or IC-based like TXB0104).
+
+### 5. PWM Polarity - Fan-Specific
+Different fans use different PWM logic:
+- **Active Low (standard)**: LOW = run, HIGH = stop → Normal polarity
+- **Active High (inverted)**: HIGH = run, LOW = stop → Inverted polarity
+
+Check fan datasheet to determine correct configuration.
+
+### 6. Minimum Drive - Unrestricted Range
+`min_drive_percent: int = 0` (changed from 20% to allow full PWM range).
 
 ## Common Patterns
 

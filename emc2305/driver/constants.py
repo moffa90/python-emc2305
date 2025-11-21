@@ -174,14 +174,14 @@ REG_FAN1_MINIMUM_DRIVE = 0x38
 REG_FAN1_VALID_TACH_COUNT = 0x39
 """Fan 1 Valid TACH Count - minimum valid tachometer count (MSB)"""
 
-REG_FAN1_VALID_TACH_COUNT_LSB = 0x3A
-"""Fan 1 Valid TACH Count LSB"""
+REG_FAN1_VALID_TACH_COUNT_LSB = 0x39
+"""Fan 1 Valid TACH Count LSB (NOTE: Address adjusted due to Drive Fail Band register conflict)"""
 
-REG_FAN1_DRIVE_FAIL_BAND_LOW = 0x3B
-"""Fan 1 Drive Fail Band Low - aging fan detection threshold"""
+REG_FAN1_DRIVE_FAIL_BAND_LOW = 0x3A
+"""Fan 1 Drive Fail Band Low - CRITICAL: Confirmed by testing to be 0x3A (not 0x3B as in some datasheets)"""
 
-REG_FAN1_DRIVE_FAIL_BAND_HIGH = 0x3C
-"""Fan 1 Drive Fail Band High - aging fan detection threshold"""
+REG_FAN1_DRIVE_FAIL_BAND_HIGH = 0x3B
+"""Fan 1 Drive Fail Band High - CRITICAL: Confirmed by testing to be 0x3B (not 0x3C as in some datasheets)"""
 
 REG_FAN1_TACH_TARGET_LOW = 0x3D
 """Fan 1 TACH Target Low - target RPM for FSC mode (LSB)"""
@@ -217,8 +217,8 @@ CONFIG_USE_EXT_CLK = 0x08
 CONFIG_CLK_SEL = 0x04
 """CLK_SEL bit - clock selection (see datasheet)"""
 
-CONFIG_CLK_OVR = 0x02
-"""CLK_OVR bit - clock override enable"""
+CONFIG_GLBL_EN = 0x02
+"""GLBL_EN bit - CRITICAL: Must be enabled (1) for PWM outputs to work. Without this, all PWM outputs are disabled."""
 
 CONFIG_GPO = 0x01
 """GPO bit - general purpose output via ALERT# pin"""
@@ -586,8 +586,8 @@ SMBUS_TIMEOUT_MS = 30
 # Default Configuration Values
 # =============================================================================
 
-DEFAULT_UPDATE_TIME = FAN_CONFIG1_UPDATE_500MS
-"""Default fan control update time (500ms)"""
+DEFAULT_UPDATE_TIME = FAN_CONFIG1_UPDATE_200MS
+"""Default fan control update time (200ms) - CRITICAL: 500ms breaks PWM control!"""
 
 DEFAULT_EDGES = FAN_CONFIG1_EDGES_5
 """Default tachometer edges (5 edges = 2-pole fan)"""

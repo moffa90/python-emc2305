@@ -53,9 +53,9 @@ class FanConfig:
     control_mode: ControlMode = ControlMode.PWM
     min_rpm: int = const.MIN_RPM
     max_rpm: int = const.MAX_RPM
-    min_drive_percent: int = 20
+    min_drive_percent: int = 0  # Changed from 20 to 0 for unrestricted PWM control
     max_step: int = const.DEFAULT_MAX_STEP
-    update_time_ms: int = 500
+    update_time_ms: int = 200  # CRITICAL: 500ms breaks PWM control! Must use 200ms (factory default)
     edges: int = 5  # Tachometer edges (3/5/7/9 for 1/2/3/4-pole fans)
     spin_up_level_percent: int = 50
     spin_up_time_ms: int = 500
@@ -227,6 +227,11 @@ class EMC2305:
 
             # Disable SMBus timeout for full I2C compliance
             config |= const.CONFIG_DIS_TO
+
+            # CRITICAL: Enable global PWM output (GLBL_EN bit)
+            # Without this bit enabled, ALL PWM outputs are disabled regardless of individual fan settings
+            config |= const.CONFIG_GLBL_EN
+            logger.info("Global PWM output enabled (GLBL_EN)")
 
             # Enable watchdog if requested
             if self.enable_watchdog:
