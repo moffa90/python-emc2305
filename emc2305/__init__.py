@@ -6,7 +6,7 @@ Hardware-agnostic implementation supporting any platform with I2C.
 """
 
 __version__ = "0.1.0"
-__author__ = "Contributors to the microchip-emc2305 project"
+__author__ = "Jose Luis Moffa"
 __license__ = "MIT"
 
 # Main driver classes

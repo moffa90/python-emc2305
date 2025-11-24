@@ -1,0 +1,24 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CONTRIBUTING.md
+include PRODUCTION_READINESS.md
+include CLAUDE.md
+include requirements.txt
+include pyproject.toml
+
+recursive-include emc2305 *.py
+recursive-include emc2305 py.typed
+
+recursive-include docs *.md *.pdf
+recursive-include examples *.py *.yaml *.toml
+
+recursive-include tests *.py
+exclude tests/__pycache__
+exclude tests/*.pyc
+
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+global-exclude *.swp
+global-exclude *~

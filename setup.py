@@ -18,7 +18,8 @@ else:
 setup(
     name="microchip-emc2305",
     version="0.1.0",
-    author="Contributors to the microchip-emc2305 project",
+    author="Jose Luis Moffa",
+    author_email="moffa3@gmail.com",
     description="Python driver for Microchip EMC2305 5-channel PWM fan controller",
     long_description=long_description,
     long_description_content_type="text/markdown",

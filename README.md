@@ -4,9 +4,13 @@
 
 A hardware-agnostic, production-ready Python driver for the Microchip EMC2305 fan controller with comprehensive feature support and robust I2C communication.
 
+[![PyPI version](https://badge.fury.io/py/microchip-emc2305.svg)](https://badge.fury.io/py/microchip-emc2305)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Python](https://img.shields.io/badge/Python-3.9+-blue)]()
-[![Platform](https://img.shields.io/badge/Platform-Linux-green)]()
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Platform](https://img.shields.io/badge/Platform-Linux-green.svg)](https://www.kernel.org/)
+[![CI](https://github.com/moffa90/python-emc2305/workflows/CI/badge.svg)](https://github.com/moffa90/python-emc2305/actions)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Downloads](https://pepy.tech/badge/microchip-emc2305)](https://pepy.tech/project/microchip-emc2305)
 
 ---
 

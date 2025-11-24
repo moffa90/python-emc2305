@@ -8,27 +8,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial project structure
-- Basic driver architecture
-- I2C communication layer with cross-process locking
-- Configuration management system
-- 20+ documented hardware constants to replace magic numbers (REG_*, CONFIG_*, GAIN_*, etc.)
-- Comprehensive I2C input validation for addresses (0x00-0x7F), registers (0x00-0xFF), and block lengths (max 32 bytes)
-- RPM calculation bounds checking and measurement validation
-- Thread-safe atomic operations for configuration locking
-- SMBus protocol compliance with block operation limits
+- Nothing yet
 
-### Fixed
-- Configuration lock race condition in EMC2305 initialization
-- I2C parameter validation with clear error messages
-- Tachometer reading validation reliability
-
-### Changed
-- Replaced all magic numbers with named constants from constants.py
-- Enhanced error handling with context-specific validation messages
-- Improved code maintainability through explicit constant usage
-
-## [0.1.0] - TBD
+## [0.1.0] - 2025-11-24
 
 ### Added
-- First release
+- Initial release of python-emc2305 driver library
+- Complete EMC2305 5-channel PWM fan controller support
+- Dual control modes: PWM (direct duty cycle) and FSC (closed-loop RPM)
+- Per-fan PWM frequency configuration
+- RPM monitoring via tachometer
+- Comprehensive fault detection (stall, spin failure, drive failure)
+- SMBus Alert (ALERT#) hardware interrupt support
+- Software configuration lock with race-condition safety
+- Watchdog timer support
+- Thread-safe operations with atomic register access
+- Cross-process I2C bus locking using filelock
+- YAML/TOML configuration file support
+- Hardware capability auto-detection
+- Full type hints (PEP 561) throughout codebase
+- Comprehensive input validation (I2C addresses, registers, RPM bounds)
+- Mock I2C bus implementation for hardware-independent testing
+- 34 comprehensive unit tests with pytest
+- Google-style docstrings for all public APIs
+- Hardware-validated on EMC2305-1-APTR chip
+- Example scripts for all major use cases
+- Development documentation and hardware integration guides
+
+### Fixed
+- GLBL_EN bit now automatically enabled in driver initialization (critical for PWM output)
+- UPDATE_TIME correctly set to 200ms (500ms breaks PWM control)
+- Drive fail band register addresses corrected (datasheet errors)
+- Minimum drive percentage unrestricted (0-100% range)
+- PWM register readback quantization documented (25% reads as ~30%, physical output correct)
+
+### Changed
+- Configuration system uses sensible defaults with auto-creation
+- PWM output configured as open-drain for better signal integrity
+- PWM polarity set to normal (LOW=run) by default
+
+### Documentation
+- Complete README with quickstart and examples
+- Hardware setup guide with I2C address configuration
+- API documentation for all public classes and methods
+- Production readiness status report
+- Register readback behavior analysis
+- Known limitations and platform requirements
+- PyPI publishing guide
+
+### Infrastructure
+- Modern pyproject.toml configuration
+- Backwards-compatible setup.py
+- GitHub Actions CI/CD workflow
+- Issue and pull request templates
+- Contributing guidelines
+- MIT License
+
+[Unreleased]: https://github.com/moffa90/python-emc2305/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/moffa90/python-emc2305/releases/tag/v0.1.0
