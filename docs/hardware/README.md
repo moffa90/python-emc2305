@@ -1,6 +1,6 @@
 # Hardware Documentation
 
-This directory contains hardware-related documentation for the Cellgain Ventus fan controller.
+This directory contains hardware-related documentation for the EMC2305 fan controller driver.
 
 ## Contents
 

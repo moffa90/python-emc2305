@@ -54,7 +54,7 @@ pip install microchip-emc2305
 ### From Source
 
 ```bash
-git clone https://github.com/microchip-fan-controllers/emc2305-python.git
+git clone https://github.com/moffa90/python-emc2305.git
 cd emc2305-python
 pip install -e .
 ```
@@ -357,7 +357,7 @@ Contributions are welcome! This project aims to provide a comprehensive, hardwar
 ### Development Setup
 
 ```bash
-git clone https://github.com/microchip-fan-controllers/emc2305-python.git
+git clone https://github.com/moffa90/python-emc2305.git
 cd emc2305-python
 pip install -e ".[dev]"
 ```
@@ -389,9 +389,9 @@ Copyright (c) 2025 Contributors to the microchip-emc2305 project
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/microchip-fan-controllers/emc2305-python/issues)
-- **Documentation**: [GitHub Wiki](https://github.com/microchip-fan-controllers/emc2305-python)
-- **Discussions**: [GitHub Discussions](https://github.com/microchip-fan-controllers/emc2305-python/discussions)
+- **Issues**: [GitHub Issues](https://github.com/moffa90/python-emc2305/issues)
+- **Documentation**: [GitHub Wiki](https://github.com/moffa90/python-emc2305)
+- **Discussions**: [GitHub Discussions](https://github.com/moffa90/python-emc2305/discussions)
 
 ---
 

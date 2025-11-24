@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Cellgain Ventus** - Production-ready I2C fan controller system for embedded Linux platforms. Provides fan speed control, RPM monitoring, and temperature sensing capabilities.
+**Python EMC2305** - Production-ready I2C fan controller driver for embedded Linux platforms. Provides fan speed control, RPM monitoring, and temperature sensing capabilities for the Microchip EMC2305 chip.
 
 **Hardware:**
 - **Board:** CGW-LED-FAN-CTRL-4-REV1
@@ -167,6 +167,23 @@ Check fan datasheet to determine correct configuration.
 
 ### 6. Minimum Drive - Unrestricted Range
 `min_drive_percent: int = 0` (changed from 20% to allow full PWM range).
+
+### 7. Register Readback Quantization (Known Behavior)
+**Date Verified:** 2025-11-24
+**Hardware:** CGW-LED-FAN-CTRL-4-REV1, EMC2305 Rev 0x80
+
+PWM register readback exhibits minor quantization anomaly at specific duty cycles:
+- **25% (0x40) reads back as ~30% (0x4C)**
+- All other tested values (0%, 50%, 75%, 100%) read back correctly
+- **Physical PWM signal is CORRECT** - verified with oscilloscope
+- **Fan operation is CORRECT** - no functional impact
+- Anomaly appears to be internal hardware quantization, not a driver issue
+
+**Impact:** None for production use. Register readback is 80% accurate (4/5 test points).
+
+**Driver Enhancement:** Added `set_pwm_duty_cycle_verified()` method with configurable tolerance for applications requiring readback validation.
+
+**Reference:** `docs/development/register-readback-findings.md` for comprehensive analysis
 
 ## Common Patterns
 

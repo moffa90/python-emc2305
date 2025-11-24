@@ -22,11 +22,11 @@ setup(
     description="Python driver for Microchip EMC2305 5-channel PWM fan controller",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/microchip-fan-controllers/emc2305-python",
+    url="https://github.com/moffa90/python-emc2305",
     project_urls={
-        "Bug Tracker": "https://github.com/microchip-fan-controllers/emc2305-python/issues",
-        "Documentation": "https://github.com/microchip-fan-controllers/emc2305-python",
-        "Source Code": "https://github.com/microchip-fan-controllers/emc2305-python",
+        "Bug Tracker": "https://github.com/moffa90/python-emc2305/issues",
+        "Documentation": "https://github.com/moffa90/python-emc2305",
+        "Source Code": "https://github.com/moffa90/python-emc2305",
     },
     packages=find_packages(exclude=["tests", "tests.*", "examples", "docs"]),
     classifiers=[

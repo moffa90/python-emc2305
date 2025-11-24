@@ -848,6 +848,87 @@ class EMC2305:
             except I2CError as e:
                 raise EMC2305Error(f"Failed to read PWM for fan {channel}: {e}")
 
+    def set_pwm_duty_cycle_verified(
+        self,
+        channel: int,
+        percent: float,
+        tolerance: float = 5.0,
+        retry_count: int = 1
+    ) -> tuple[bool, float]:
+        """
+        Set PWM duty cycle with optional readback verification.
+
+        This method writes the PWM value and verifies it was set correctly by reading
+        back the register. Due to known hardware quantization behavior, some values
+        (particularly around 25%) may read back slightly different than written.
+
+        Args:
+            channel: Fan channel number (1-5)
+            percent: PWM duty cycle percentage (0-100)
+            tolerance: Acceptable readback difference in percent (default: 5.0%)
+            retry_count: Number of retries if verification fails (default: 1)
+
+        Returns:
+            Tuple of (success: bool, actual_percent: float)
+            - success: True if readback matches within tolerance
+            - actual_percent: The actual readback value
+
+        Raises:
+            ValueError: If channel or percent is out of range
+            EMC2305Error: If I2C communication fails
+
+        Note:
+            Known hardware behavior: PWM values around 25% (0x40) may read back
+            as ~30% (0x4C) due to internal quantization. This does NOT affect
+            the actual PWM output signal or fan operation. See documentation:
+            docs/development/register-readback-findings.md
+
+        Example:
+            >>> success, actual = fan_controller.set_pwm_duty_cycle_verified(1, 50.0)
+            >>> if success:
+            ...     print(f"PWM set and verified at {actual}%")
+            ... else:
+            ...     print(f"Readback mismatch: wanted 50%, got {actual}%")
+        """
+        self._validate_channel(channel)
+        self._validate_percent(percent)
+
+        for attempt in range(retry_count + 1):
+            # Set the PWM duty cycle
+            self.set_pwm_duty_cycle(channel, percent)
+
+            # Wait for update cycle to complete
+            # Update time is typically 200ms (configurable in FanConfig)
+            time.sleep(0.25)
+
+            # Read back the value
+            actual = self.get_pwm_duty_cycle(channel)
+
+            # Check if within tolerance
+            delta = abs(actual - percent)
+            if delta <= tolerance:
+                if attempt > 0:
+                    logger.info(
+                        f"Fan {channel} PWM verified at {actual:.1f}% "
+                        f"(target: {percent:.1f}%, attempt: {attempt + 1})"
+                    )
+                return (True, actual)
+            else:
+                if attempt < retry_count:
+                    logger.warning(
+                        f"Fan {channel} PWM readback mismatch on attempt {attempt + 1}: "
+                        f"wrote {percent:.1f}%, read {actual:.1f}% (delta: {delta:.1f}%). "
+                        f"Retrying..."
+                    )
+                else:
+                    logger.warning(
+                        f"Fan {channel} PWM readback mismatch after {retry_count + 1} attempts: "
+                        f"wrote {percent:.1f}%, read {actual:.1f}% (delta: {delta:.1f}%). "
+                        f"This may be normal hardware quantization behavior."
+                    )
+
+        return (False, actual)
+
     # =============================================================================
     # Public API - RPM Control (FSC Mode)
     # =============================================================================

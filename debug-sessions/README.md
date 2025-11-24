@@ -53,4 +53,34 @@ debug-sessions/
 
 ---
 
-**Last Updated:** 2025-11-21
+### 2025-11-24-register-readback-investigation
+
+**Issue:** PWM register (0x30) readback values sometimes differ from written values
+
+**Root Cause:** Hardware quantization anomaly at specific duty cycles (25% reads as 30%), but physical PWM output is correct
+
+**Solution:** Documented as known hardware behavior. Optional verification method added to driver.
+
+**Key Discoveries:**
+- EMC2305 register readback is 80% accurate (4/5 test points: 0%, 50%, 75%, 100%)
+- 25% PWM (0x40) reads back as 0x4C (~30%) due to internal quantization
+- Physical PWM signal is correct (verified with oscilloscope)
+- No functional impact - fan operates correctly
+- Two configuration issues corrected: PWM output mode and polarity
+
+**Files:**
+- `README.md` - Session summary with test results
+- `debug_pwm_readback.sh` - Comprehensive diagnostic script
+- `oscilloscope_pwm_test.py` - PWM signal generation for measurement
+- `test_open_drain_5v.py` - Open-drain configuration validation
+- `test_remote_emc2305.py` - Remote I2C communication testing
+
+**Enhancements Applied to Library:**
+1. Added `set_pwm_duty_cycle_verified()` method with configurable tolerance
+2. Comprehensive documentation in `docs/development/register-readback-findings.md`
+3. Updated CLAUDE.md with register readback quantization section
+4. Verified all critical configurations (GLBL_EN, open-drain, polarity)
+
+---
+
+**Last Updated:** 2025-11-24

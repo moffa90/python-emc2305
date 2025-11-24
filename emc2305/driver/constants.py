@@ -7,7 +7,7 @@ EMC2305 Hardware Constants
 Register addresses, timing constants, and hardware-specific values for the
 SMSC/Microchip EMC2305 5-Channel PWM Fan Controller.
 
-Based on EMC2305 datasheet revision 1.3 (05-18-11)
+Based on EMC2305 datasheet DS20006532A (April 2021)
 """
 
 # =============================================================================
@@ -172,10 +172,7 @@ REG_FAN1_MINIMUM_DRIVE = 0x38
 """Fan 1 Minimum Drive - prevents stall oscillation"""
 
 REG_FAN1_VALID_TACH_COUNT = 0x39
-"""Fan 1 Valid TACH Count - minimum valid tachometer count (MSB)"""
-
-REG_FAN1_VALID_TACH_COUNT_LSB = 0x39
-"""Fan 1 Valid TACH Count LSB (NOTE: Address adjusted due to Drive Fail Band register conflict)"""
+"""Fan 1 Valid TACH Count - minimum valid tachometer count (MSB only, single 8-bit register)"""
 
 REG_FAN1_DRIVE_FAIL_BAND_LOW = 0x3A
 """Fan 1 Drive Fail Band Low - CRITICAL: Confirmed by testing to be 0x3A (not 0x3B as in some datasheets)"""
@@ -183,10 +180,10 @@ REG_FAN1_DRIVE_FAIL_BAND_LOW = 0x3A
 REG_FAN1_DRIVE_FAIL_BAND_HIGH = 0x3B
 """Fan 1 Drive Fail Band High - CRITICAL: Confirmed by testing to be 0x3B (not 0x3C as in some datasheets)"""
 
-REG_FAN1_TACH_TARGET_LOW = 0x3D
+REG_FAN1_TACH_TARGET_LOW = 0x3C
 """Fan 1 TACH Target Low - target RPM for FSC mode (LSB)"""
 
-REG_FAN1_TACH_TARGET_HIGH = 0x3E
+REG_FAN1_TACH_TARGET_HIGH = 0x3D
 """Fan 1 TACH Target High - target RPM for FSC mode (MSB)"""
 
 REG_FAN1_TACH_READING_HIGH = 0x3E
