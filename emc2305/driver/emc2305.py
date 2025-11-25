@@ -1245,6 +1245,11 @@ class EMC2305:
                 raw_tach = (tach_high << const.TACH_COUNT_HIGH_SHIFT) | tach_low
                 tach_count = raw_tach >> const.TACH_COUNT_LOW_SHIFT
 
+                # Check for max TACH count - indicates no tach signal (fan stopped)
+                # EMC2305 returns 0x1FFF (or near max) when no pulses are detected
+                if tach_count >= const.TACH_COUNT_STOPPED_THRESHOLD:
+                    return 0
+
                 # Convert to RPM
                 config = self._fan_configs.get(channel, FanConfig())
                 rpm = self._tach_count_to_rpm(tach_count, config.edges)

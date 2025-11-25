@@ -477,6 +477,10 @@ EXTERNAL_CLOCK_FREQ_HZ = 32768
 TACH_COUNT_MAX = 0x1FFF
 """Maximum tachometer count value (13-bit)"""
 
+TACH_COUNT_STOPPED_THRESHOLD = 1000
+"""Tach count threshold for detecting stopped fan (after 3-bit shift).
+EMC2305 returns near-max values (e.g., 1022) when no tach signal is detected."""
+
 # Minimum valid TACH count - fan is considered stalled below this
 DEFAULT_VALID_TACH_COUNT = 0x0FFF
 """Default minimum valid tachometer count for stall detection"""
