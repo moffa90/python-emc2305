@@ -14,8 +14,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Target Platform:** Multiplatform Linux (Banana Pi, Raspberry Pi, generic Linux systems with I2C support)
 
-**Current Phase:** Phase 1 - Core Driver Development (Completed with critical fixes)
-
 ## Development Commands
 
 ### Driver Testing
@@ -46,9 +44,6 @@ i2cdetect -y [bus_number]
 # Install in development mode
 pip3 install -e .
 
-# Install with gRPC support
-pip3 install -e ".[grpc]"
-
 # Install development dependencies
 pip3 install -e ".[dev]"
 ```
@@ -59,16 +54,13 @@ pip3 install -e ".[dev]"
 
 ```
 ┌─────────────────────────────────────────┐
-│   High-Level API (TBD)                  │  <- API Layer (gRPC/REST)
-│   - Fan control service                 │
-│   - Monitoring endpoints                │
+│   Application Code                      │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
 │   Fan Controller Driver                 │  <- Hardware Abstraction
 │   - Speed control                       │
 │   - RPM monitoring                      │
-│   - Temperature sensing                 │
 │   - Configuration management            │
 └──────────────┬──────────────────────────┘
                │
@@ -126,7 +118,7 @@ pip3 install -e ".[dev]"
 ### Hardware Limitations
 - **I2C bus speed**: Typically 100 kHz or 400 kHz (check device requirements)
 - **No hot-plug**: Devices must be present at initialization
-- **Chip-specific limitations**: [TBD - Add specific chip constraints]
+- **Chip-specific limitations**: See EMC2305 datasheet for detailed constraints
 
 ### I2C Bus Sharing
 - **Multiple services may use the same I2C bus** - always use I2C locking
@@ -263,10 +255,6 @@ scp /tmp/ventus-deploy.tar.gz user@target:/tmp/
 ssh user@target "cd /opt && tar xzf /tmp/ventus-deploy.tar.gz && pip3 install -r requirements.txt"
 ```
 
-### Systemd Service (TBD)
-
-Will be added in Phase 2 for automatic startup and monitoring.
-
 ## Known Issues and Gotchas
 
 ### I2C Permissions
@@ -288,26 +276,6 @@ sudo chmod 1777 /var/lock
 
 ### Bus Speed Configuration
 Some devices require specific I2C bus speeds. Configure via device tree or kernel module parameters.
-
-## Development Phases
-
-### Phase 1: Core Driver (Current)
-- ✅ Project structure and templates
-- 🔄 I2C communication layer
-- 🔄 Fan controller driver implementation
-- 🔄 Basic examples and tests
-
-### Phase 2: Advanced Features (Planned)
-- gRPC API (optional)
-- Automatic fan curves (temperature-based)
-- PID controller implementation
-- Systemd service integration
-
-### Phase 3: Tools & Monitoring (Planned)
-- CLI client
-- Web dashboard
-- Real-time monitoring
-- Logging and diagnostics
 
 ## Code Style Standards
 
@@ -348,12 +316,6 @@ Some devices require specific I2C bus speeds. Configure via device tree or kerne
 - Validate temperature readings (reasonable range)
 - Handle sensor errors
 - Provide calibration options if needed
-
-## Reference Projects
-
-This project follows patterns established in:
-- **bananapi-i2c-led-board (luminex)** - I2C driver architecture, gRPC API patterns
-- **go-cyacd** - Professional code structure, documentation standards
 
 ## Quick Reference
 

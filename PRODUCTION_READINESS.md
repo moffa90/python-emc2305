@@ -5,7 +5,7 @@
 
 ## Executive Summary
 
-The EMC2305 driver library is now production-ready for use as a driver/library component. All critical gaps have been addressed, making it suitable for integration into applications that will provide higher-level features like gRPC APIs, web dashboards, etc.
+The EMC2305 driver library is now production-ready for use as a driver/library component. All critical gaps have been addressed, making it suitable for integration into applications.
 
 ## Completed Improvements
 
@@ -157,8 +157,6 @@ from emc2305 import (
 ### For Internal Use ✅
 The library is **immediately ready** for:
 - Integration into applications
-- Building gRPC/REST APIs on top
-- Creating monitoring dashboards
 - Developing fan control services
 - Testing and validation
 
@@ -169,21 +167,6 @@ The library is **ready** for public release with:
 - Unit test coverage
 - Professional package structure
 - Correct repository references
-
----
-
-## What's NOT Included (By Design)
-
-These are **application-layer features** and are intentionally excluded from the driver library:
-
-❌ gRPC/REST API server
-❌ Web dashboard
-❌ CLI client application
-❌ Systemd service integration
-❌ Automatic temperature-based fan curves
-❌ Monitoring/alerting system
-
-**Rationale:** These belong in applications that use the library, not in the driver itself.
 
 ---
 
@@ -203,9 +186,6 @@ pip install -e ".[config]"
 
 # Development tools
 pip install -e ".[dev]"
-
-# gRPC support (if building API server)
-pip install -e ".[grpc]"
 ```
 
 ---
@@ -264,24 +244,6 @@ PYTHONPATH=. python3 examples/python/test_fsc_mode.py
 
 ---
 
-## Next Steps for Application Development
-
-Now that the driver library is production-ready, applications can be built on top of it:
-
-### Phase 2: Application Layer (Recommended)
-1. **gRPC API Server** - Remote control and monitoring
-2. **REST API** - HTTP-based interface
-3. **CLI Client** - Command-line control tool
-4. **Configuration Service** - Centralized config management
-
-### Phase 3: Advanced Features (Optional)
-5. **Web Dashboard** - Real-time monitoring UI
-6. **Automatic Fan Curves** - Temperature-based control
-7. **Systemd Integration** - Service management
-8. **Logging & Monitoring** - Telemetry and diagnostics
-
----
-
 ## Production Checklist
 
 - [x] Core driver functionality complete
@@ -333,4 +295,4 @@ The library provides a solid foundation for building fan control applications, m
 - CI/CD pipeline integration
 - Third-party consumption
 
-**Recommended:** Proceed with building application-layer features (gRPC/REST APIs, dashboards, etc.) on top of this solid driver foundation.
+**Available on PyPI:** `pip install microchip-emc2305`

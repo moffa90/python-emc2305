@@ -40,11 +40,6 @@ dev = [
     "mypy>=1.5",
     "ruff>=0.1.0",
 ]
-grpc = [
-    "grpcio>=1.60.0",
-    "grpcio-tools>=1.60.0",
-    "protobuf>=4.25.0",
-]
 
 [project.urls]
 Homepage = "https://github.com/moffa90/python-emc2305"
@@ -53,7 +48,7 @@ Repository = "https://github.com/moffa90/python-emc2305"
 "Bug Tracker" = "https://github.com/moffa90/python-emc2305/issues"
 
 [tool.setuptools]
-packages = ["emc2305", "emc2305.driver", "emc2305.proto", "emc2305.server"]
+packages = ["emc2305", "emc2305.driver"]
 
 [tool.setuptools.package-data]
 emc2305 = ["py.typed"]

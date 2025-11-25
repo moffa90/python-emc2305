@@ -23,20 +23,20 @@ Place the following documentation here:
 
 ## Hardware Specifications
 
-**Fan Controller IC**: [TBD - Add chip model]
+**Fan Controller IC**: Microchip EMC2305 (5-channel PWM fan controller)
 
-**I2C Addresses**: [TBD - List device addresses]
+**I2C Addresses**: Configurable via ADDR_SEL pin (0x4C, 0x4D, 0x5C, 0x5D, 0x5E, 0x5F)
 
 **Supported Features**:
-- [ ] Fan speed control (PWM/DC)
-- [ ] RPM monitoring (tachometer)
-- [ ] Temperature sensing
-- [ ] Fault detection
+- [x] Fan speed control (PWM)
+- [x] RPM monitoring (tachometer)
+- [x] Fault detection (stall, spin failure, drive failure)
+- [x] Closed-loop RPM control (FSC mode with hardware PID)
 
 **Electrical Specifications**:
-- Operating voltage: [TBD]
-- I2C bus speed: [TBD]
-- Fan power ratings: [TBD]
+- Operating voltage: 3.3V (VDD)
+- I2C bus speed: 100 kHz / 400 kHz
+- Fan power: 5V or 12V (separate rail)
 
 ## Quick Reference
 
@@ -46,14 +46,9 @@ Place the following documentation here:
 # Scan I2C bus 0
 i2cdetect -y 0
 
-# Expected output should show devices at:
-# [TBD - List expected addresses]
+# Expected output should show EMC2305 at configured address (e.g., 0x4D)
 ```
-
-### Pin Connections
-
-[TBD - Add pinout diagram or table]
 
 ## Notes
 
-Add any hardware-specific notes, quirks, or important considerations here.
+See the EMC2305 datasheet in this directory for complete hardware specifications.
