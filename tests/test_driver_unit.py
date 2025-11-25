@@ -166,18 +166,18 @@ def test_set_target_rpm_invalid_range(emc2305):
 
 def test_get_current_rpm(emc2305, mock_bus):
     """Test reading current RPM."""
-    # Mock TACH reading for ~3000 RPM
+    # Mock TACH reading for ~4000 RPM
     # Formula: RPM = ((edges-1) * TACH_FREQ * 60) / (TACH_COUNT * poles)
-    # With internal clock 32768 Hz, 2-pole fan (edges=5):
-    #   count = ((5-1) * 32768 * 60) / (3000 * 2) = 1311
+    # With internal clock 32000 Hz, 2-pole fan (edges=5):
+    #   count = ((5-1) * 32000 * 60) / (4000 * 2) = 960
     # Register format: raw = (high << 8) | low, count = raw >> 3
-    # So raw = 1311 << 3 = 10488 = 0x28F8
-    # high = 0x28, low = 0xF8
-    mock_bus.set_register(const.REG_FAN1_TACH_READING_HIGH, 0x28)
-    mock_bus.set_register(const.REG_FAN1_TACH_READING_LOW, 0xF8)
+    # So raw = 960 << 3 = 7680 = 0x1E00
+    # high = 0x1E (masked from 0x1F), low = 0x00
+    mock_bus.set_register(const.REG_FAN1_TACH_READING_HIGH, 0x1E)
+    mock_bus.set_register(const.REG_FAN1_TACH_READING_LOW, 0x00)
 
     rpm = emc2305.get_current_rpm(1)
-    assert 2800 <= rpm <= 3200, f"Expected ~3000 RPM, got {rpm}"
+    assert 3800 <= rpm <= 4200, f"Expected ~4000 RPM, got {rpm}"
 
 
 # =============================================================================
@@ -314,18 +314,18 @@ def test_pwm_to_percent_conversion(emc2305):
 def test_rpm_to_tach_count_conversion(emc2305):
     """Test RPM to tachometer count conversion."""
     # Formula: count = ((edges-1) * TACH_FREQ * 60) / (RPM * poles)
-    # With internal clock 32768 Hz, 2-pole fan (edges=5):
-    #   count = ((5-1) * 32768 * 60) / (3000 * 2) = 1310.72 ≈ 1311
+    # With internal clock 32000 Hz, 2-pole fan (edges=5):
+    #   count = ((5-1) * 32000 * 60) / (3000 * 2) = 7680000 / 6000 = 1280
     count = emc2305._rpm_to_tach_count(3000, edges=5)
-    assert 1300 <= count <= 1320, f"Expected ~1311, got {count}"
+    assert 1270 <= count <= 1290, f"Expected ~1280, got {count}"
 
 
 def test_tach_count_to_rpm_conversion(emc2305):
     """Test tachometer count to RPM conversion."""
-    # Count of 1311 with 5 edges (2-pole fan) should give ~3000 RPM
+    # Count of 1280 with 5 edges (2-pole fan) should give ~3000 RPM
     # Formula: RPM = ((edges-1) * TACH_FREQ * 60) / (TACH_COUNT * poles)
-    # RPM = ((5-1) * 32768 * 60) / (1311 * 2) = 3000.12
-    rpm = emc2305._tach_count_to_rpm(1311, edges=5)
+    # RPM = ((5-1) * 32000 * 60) / (1280 * 2) = 7680000 / 2560 = 3000
+    rpm = emc2305._tach_count_to_rpm(1280, edges=5)
     assert 2900 <= rpm <= 3100, f"Expected ~3000 RPM, got {rpm}"
 
 
