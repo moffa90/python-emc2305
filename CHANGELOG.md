@@ -10,6 +10,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Nothing yet
 
+## [1.1.0] - 2025-11-25
+
+### Added
+- `set_pwm_output_mode()` - Configure PWM output as open-drain or push-pull per channel
+- `set_all_pwm_output_mode()` - Configure PWM output mode for all channels at once
+- `get_pwm_output_mode()` - Read current PWM output mode for a channel
+- `set_pwm_polarity()` - Configure PWM polarity (normal/inverted) per channel
+- `get_pwm_polarity()` - Read current PWM polarity for a channel
+- `MIN_VALID_RPM_READING` constant (200 RPM) for tachometer noise filtering
+
+### Fixed
+- **Critical**: PWM output mode register (0x2B) logic was inverted. Per datasheet: 0=open-drain (default), 1=push-pull. Previous implementation had this backwards.
+- RPM readings below 200 RPM now return 0 (filters tachometer noise when fan is stopped)
+
+## [1.0.0] - 2025-11-25
+
+### Added
+- PyPI publishing workflow with trusted publishing (OIDC)
+- Donation section in README
+
+### Changed
+- Package published to PyPI as `microchip-emc2305`
+- Removed phase/roadmap references from documentation
+
 ## [0.1.0] - 2025-11-24
 
 ### Added
@@ -64,5 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contributing guidelines
 - MIT License
 
-[Unreleased]: https://github.com/moffa90/python-emc2305/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/moffa90/python-emc2305/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/moffa90/python-emc2305/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/moffa90/python-emc2305/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/moffa90/python-emc2305/releases/tag/v0.1.0

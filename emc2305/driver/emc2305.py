@@ -936,6 +936,161 @@ class EMC2305:
 
         return (False, actual)
 
+    def set_pwm_output_mode(self, channel: int, open_drain: bool = True) -> None:
+        """
+        Set PWM output mode for a specific fan channel.
+
+        Args:
+            channel: Fan channel number (1-5)
+            open_drain: True for open-drain (default), False for push-pull
+
+        Note:
+            - Open-drain (default): Requires external pull-up resistor. Better for
+              level shifting and shared bus scenarios.
+            - Push-pull: Active drive high and low. No external pull-up needed.
+
+        Example:
+            >>> fan_controller.set_pwm_output_mode(1, open_drain=True)   # Open-drain
+            >>> fan_controller.set_pwm_output_mode(1, open_drain=False)  # Push-pull
+        """
+        self._validate_channel(channel)
+
+        with self._lock:
+            try:
+                # Read current config
+                current = self.i2c_bus.read_byte(self.address, const.REG_PWM_OUTPUT_CONFIG)
+
+                # Per datasheet: 0 = open-drain (default), 1 = push-pull
+                bit_mask = 1 << (channel - 1)
+
+                if open_drain:
+                    new_config = current & ~bit_mask  # Clear bit for open-drain
+                else:
+                    new_config = current | bit_mask   # Set bit for push-pull
+
+                self.i2c_bus.write_byte(self.address, const.REG_PWM_OUTPUT_CONFIG, new_config)
+                logger.debug(
+                    f"Fan {channel} PWM output set to {'open-drain' if open_drain else 'push-pull'}"
+                )
+
+            except I2CError as e:
+                raise EMC2305Error(f"Failed to set PWM output mode for fan {channel}: {e}")
+
+    def set_all_pwm_output_mode(self, open_drain: bool = True) -> None:
+        """
+        Set PWM output mode for all fan channels.
+
+        Args:
+            open_drain: True for open-drain (default), False for push-pull
+
+        Example:
+            >>> fan_controller.set_all_pwm_output_mode(open_drain=True)   # All open-drain
+            >>> fan_controller.set_all_pwm_output_mode(open_drain=False)  # All push-pull
+        """
+        with self._lock:
+            try:
+                # Per datasheet: 0 = open-drain, 1 = push-pull
+                config = 0x00 if open_drain else 0x1F
+                self.i2c_bus.write_byte(self.address, const.REG_PWM_OUTPUT_CONFIG, config)
+                logger.debug(
+                    f"All PWM outputs set to {'open-drain' if open_drain else 'push-pull'}"
+                )
+
+            except I2CError as e:
+                raise EMC2305Error(f"Failed to set PWM output mode: {e}")
+
+    def get_pwm_output_mode(self, channel: int) -> bool:
+        """
+        Get PWM output mode for a specific fan channel.
+
+        Args:
+            channel: Fan channel number (1-5)
+
+        Returns:
+            True if open-drain, False if push-pull
+
+        Example:
+            >>> is_open_drain = fan_controller.get_pwm_output_mode(1)
+            >>> print("Open-drain" if is_open_drain else "Push-pull")
+        """
+        self._validate_channel(channel)
+
+        with self._lock:
+            try:
+                config = self.i2c_bus.read_byte(self.address, const.REG_PWM_OUTPUT_CONFIG)
+                bit_mask = 1 << (channel - 1)
+                # Per datasheet: 0 = open-drain, 1 = push-pull
+                # Return True for open-drain (bit NOT set)
+                return not bool(config & bit_mask)
+
+            except I2CError as e:
+                raise EMC2305Error(f"Failed to read PWM output mode for fan {channel}: {e}")
+
+    def set_pwm_polarity(self, channel: int, inverted: bool = False) -> None:
+        """
+        Set PWM polarity for a specific fan channel.
+
+        Args:
+            channel: Fan channel number (1-5)
+            inverted: True for inverted (100% = fan off), False for normal (100% = fan max)
+
+        Note:
+            - Normal polarity (default): 0% duty = fan off, 100% duty = fan max speed
+            - Inverted polarity: 0% duty = fan max speed, 100% duty = fan off
+            Check your fan's datasheet to determine the correct polarity.
+
+        Example:
+            >>> fan_controller.set_pwm_polarity(1, inverted=False)  # Normal
+            >>> fan_controller.set_pwm_polarity(1, inverted=True)   # Inverted
+        """
+        self._validate_channel(channel)
+
+        with self._lock:
+            try:
+                # Read current config
+                current = self.i2c_bus.read_byte(self.address, const.REG_PWM_POLARITY_CONFIG)
+
+                # Each channel is 1 bit: 0 = normal, 1 = inverted
+                bit_mask = 1 << (channel - 1)
+
+                if inverted:
+                    new_config = current | bit_mask
+                else:
+                    new_config = current & ~bit_mask
+
+                self.i2c_bus.write_byte(self.address, const.REG_PWM_POLARITY_CONFIG, new_config)
+                logger.debug(
+                    f"Fan {channel} PWM polarity set to {'inverted' if inverted else 'normal'}"
+                )
+
+            except I2CError as e:
+                raise EMC2305Error(f"Failed to set PWM polarity for fan {channel}: {e}")
+
+    def get_pwm_polarity(self, channel: int) -> bool:
+        """
+        Get PWM polarity for a specific fan channel.
+
+        Args:
+            channel: Fan channel number (1-5)
+
+        Returns:
+            True if inverted, False if normal
+
+        Example:
+            >>> is_inverted = fan_controller.get_pwm_polarity(1)
+            >>> print("Inverted" if is_inverted else "Normal")
+        """
+        self._validate_channel(channel)
+
+        with self._lock:
+            try:
+                config = self.i2c_bus.read_byte(self.address, const.REG_PWM_POLARITY_CONFIG)
+                bit_mask = 1 << (channel - 1)
+                return bool(config & bit_mask)
+
+            except I2CError as e:
+                raise EMC2305Error(f"Failed to read PWM polarity for fan {channel}: {e}")
+
     # =============================================================================
     # Public API - RPM Control (FSC Mode)
     # =============================================================================
@@ -1059,6 +1214,10 @@ class EMC2305:
                 # Convert to RPM
                 config = self._fan_configs.get(channel, FanConfig())
                 rpm = self._tach_count_to_rpm(tach_count, config.edges)
+
+                # Filter noise - readings below threshold mean fan is stopped
+                if rpm < const.MIN_VALID_RPM_READING:
+                    return 0
 
                 return rpm
 

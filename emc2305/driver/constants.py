@@ -97,8 +97,16 @@ REG_PWM_OUTPUT_CONFIG = 0x2B
 DEFAULT_PWM_POLARITY = 0x00
 """Default PWM polarity configuration (normal/non-inverted for all channels)"""
 
-DEFAULT_PWM_OUTPUT_CONFIG = 0x1F
-"""Default PWM output configuration (open-drain for all channels) - Recommended by electronics engineer for better signal integrity"""
+DEFAULT_PWM_OUTPUT_CONFIG = 0x00
+"""Default PWM output configuration (open-drain for all channels, per datasheet default)"""
+
+# PWM Output Type Constants (Register 0x2B bit values)
+# Datasheet: '0' (default) = open drain, '1' = push-pull
+PWM_OUTPUT_OPEN_DRAIN = 0
+"""Open-drain output mode (default, requires external pull-up resistor)"""
+
+PWM_OUTPUT_PUSH_PULL = 1
+"""Push-pull output mode (active drive high and low)"""
 
 FAN_INTERRUPT_ENABLE_ALL_FANS = 0x1F
 """Enable interrupts for all 5 fan channels (bits 4-0 set)"""
@@ -443,6 +451,9 @@ SAFE_SHUTDOWN_PWM_PERCENT = 30
 
 MIN_RPM = 500
 """Minimum supported RPM (hardware limit)"""
+
+MIN_VALID_RPM_READING = 200
+"""RPM readings below this threshold are considered noise (fan stopped)"""
 
 MAX_RPM = 16000
 """Maximum supported RPM with internal clock (500-16k range)"""
