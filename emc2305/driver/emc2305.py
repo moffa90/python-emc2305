@@ -518,7 +518,7 @@ class EMC2305:
         if config.drive_fail_band_rpm > 0:
             # Calculate tach count at (target - band) to get the count difference
             # This represents how much the tach count can deviate below target
-            drive_fail_band_count = self._rpm_to_tach_count(config.drive_fail_band_rpm)
+            drive_fail_band_count = self._rpm_to_tach_count(config.drive_fail_band_rpm, config.edges)
 
             # Drive Fail Band Low Byte (0x3B) - bits 7:3 of count
             drive_fail_low = (drive_fail_band_count >> const.DRIVE_FAIL_LOW_SHIFT) & const.BYTE_MASK
@@ -705,14 +705,19 @@ class EMC2305:
         """Convert PWM value (0-255) to percentage (0-100)."""
         return (pwm / const.MAX_PWM_VALUE) * 100.0
 
-    def _rpm_to_tach_count(self, rpm: int) -> int:
+    def _rpm_to_tach_count(self, rpm: int, edges: int = 5) -> int:
         """
         Convert RPM to tachometer count value.
 
-        Formula: TACH_COUNT = (TACH_FREQ * 60) / (RPM * poles)
+        Formula: TACH_COUNT = ((edges - 1) * TACH_FREQ * 60) / (RPM * poles)
+
+        This is the inverse of _tach_count_to_rpm(). The (edges - 1) factor
+        accounts for EMC2305 counting clock cycles between (edges - 1)
+        tachometer transitions.
 
         Args:
             rpm: Target RPM value
+            edges: Tachometer edges per revolution (3, 5, 7, or 9)
 
         Returns:
             13-bit tachometer count value
@@ -736,9 +741,13 @@ class EMC2305:
             else const.INTERNAL_CLOCK_FREQ_HZ
         )
 
-        # Assume 2-pole fan (5 edges) - this should come from config
-        poles = 2
-        tach_count = (tach_freq * 60) // (rpm * poles)
+        # Calculate poles from edges
+        poles = (edges - 1) // 2
+        if poles == 0:
+            poles = 2  # Default to 2-pole
+
+        # Inverse of RPM formula: TACH_COUNT = ((edges - 1) * tach_freq * 60) / (RPM * poles)
+        tach_count = ((edges - 1) * tach_freq * 60) // (rpm * poles)
 
         return min(const.TACH_COUNT_MAX, max(0, tach_count))
 
@@ -746,10 +755,14 @@ class EMC2305:
         """
         Convert tachometer count value to RPM.
 
-        Formula: RPM = (TACH_FREQ * 60) / (TACH_COUNT * poles)
+        Formula: RPM = ((edges - 1) * TACH_FREQ * 60) / (TACH_COUNT * poles)
+
+        The EMC2305 counts clock cycles between (edges-1) tachometer signal
+        transitions. The formula accounts for this by including (edges-1) in
+        the numerator.
 
         Args:
-            tach_count: 13-bit tachometer count value
+            tach_count: 13-bit tachometer count value (after 3-bit right shift)
             edges: Tachometer edges per revolution (3, 5, 7, or 9)
 
         Returns:
@@ -785,7 +798,10 @@ class EMC2305:
         if poles == 0:
             poles = 2  # Default to 2-pole
 
-        rpm = (tach_freq * 60) // (tach_count * poles)
+        # Corrected formula: RPM = ((edges - 1) * tach_freq * 60) / (tach_count * poles)
+        # The (edges - 1) factor accounts for EMC2305 counting clock cycles
+        # between (edges - 1) tachometer transitions
+        rpm = ((edges - 1) * tach_freq * 60) // (tach_count * poles)
 
         return rpm
 
@@ -1119,21 +1135,26 @@ class EMC2305:
 
         with self._lock:
             try:
-                # Convert RPM to TACH count
-                tach_count = self._rpm_to_tach_count(rpm)
+                # Get fan config to use correct edges value
+                config = self._fan_configs.get(channel, FanConfig())
+
+                # Convert RPM to TACH count using configured edges
+                tach_count = self._rpm_to_tach_count(rpm, config.edges)
 
                 # Calculate register addresses
                 base = const.REG_FAN1_SETTING + (channel - 1) * const.FAN_CHANNEL_OFFSET
                 reg_low = base + (const.REG_FAN1_TACH_TARGET_LOW - const.REG_FAN1_SETTING)
                 reg_high = base + (const.REG_FAN1_TACH_TARGET_HIGH - const.REG_FAN1_SETTING)
 
-                # Write TACH target (13-bit value, MSB first)
+                # Write TACH target (13-bit value shifted left by 3, MSB first)
+                # The register format has 3 LSBs unused in the LOW register
+                shifted_tach = tach_count << const.TACH_COUNT_LOW_SHIFT
                 self.i2c_bus.write_byte(
                     self.address,
                     reg_high,
-                    (tach_count >> const.TACH_COUNT_HIGH_SHIFT) & const.TACH_COUNT_HIGH_MASK,
+                    (shifted_tach >> const.TACH_COUNT_HIGH_SHIFT) & const.TACH_COUNT_HIGH_MASK,
                 )
-                self.i2c_bus.write_byte(self.address, reg_low, tach_count & const.BYTE_MASK)
+                self.i2c_bus.write_byte(self.address, reg_low, shifted_tach & const.BYTE_MASK)
 
                 logger.debug(
                     f"Fan {channel} target RPM set to {rpm} (TACH count: 0x{tach_count:04X})"
@@ -1165,12 +1186,16 @@ class EMC2305:
                 reg_low = base + (const.REG_FAN1_TACH_TARGET_LOW - const.REG_FAN1_SETTING)
                 reg_high = base + (const.REG_FAN1_TACH_TARGET_HIGH - const.REG_FAN1_SETTING)
 
-                # Read TACH target (13-bit value)
+                # Read TACH target registers
+                # Same format as TACH reading: 13-bit value with 3 LSBs unused in LOW register
                 tach_high = (
                     self.i2c_bus.read_byte(self.address, reg_high) & const.TACH_COUNT_HIGH_MASK
                 )
                 tach_low = self.i2c_bus.read_byte(self.address, reg_low)
-                tach_count = (tach_high << const.TACH_COUNT_HIGH_SHIFT) | tach_low
+
+                # Combine registers and apply 3-bit right shift
+                raw_tach = (tach_high << const.TACH_COUNT_HIGH_SHIFT) | tach_low
+                tach_count = raw_tach >> const.TACH_COUNT_LOW_SHIFT
 
                 # Convert to RPM
                 config = self._fan_configs.get(channel, FanConfig())
@@ -1204,12 +1229,19 @@ class EMC2305:
                 reg_low = base + (const.REG_FAN1_TACH_READING_LOW - const.REG_FAN1_SETTING)
                 reg_high = base + (const.REG_FAN1_TACH_READING_HIGH - const.REG_FAN1_SETTING)
 
-                # Read TACH reading (13-bit value)
+                # Read TACH reading registers
+                # The TACH count is a 13-bit value stored across two registers:
+                # - HIGH register: bits 12:8 (5 bits)
+                # - LOW register: bits 7:3 (5 bits), with 3 LSBs unused
                 tach_high = (
                     self.i2c_bus.read_byte(self.address, reg_high) & const.TACH_COUNT_HIGH_MASK
                 )
                 tach_low = self.i2c_bus.read_byte(self.address, reg_low)
-                tach_count = (tach_high << const.TACH_COUNT_HIGH_SHIFT) | tach_low
+
+                # Combine registers and apply 3-bit right shift to get actual count
+                # The combined 16-bit value has the count in bits 15:3
+                raw_tach = (tach_high << const.TACH_COUNT_HIGH_SHIFT) | tach_low
+                tach_count = raw_tach >> const.TACH_COUNT_LOW_SHIFT
 
                 # Convert to RPM
                 config = self._fan_configs.get(channel, FanConfig())

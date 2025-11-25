@@ -160,7 +160,65 @@ Check fan datasheet to determine correct configuration.
 ### 6. Minimum Drive - Unrestricted Range
 `min_drive_percent: int = 0` (changed from 20% to allow full PWM range).
 
-### 7. Register Readback Quantization (Known Behavior)
+### 7. Tachometer Edges Configuration - CRITICAL for RPM Accuracy
+**Date Verified:** 2025-11-25
+
+The `edges` parameter MUST match your fan's tachometer pulses per revolution:
+
+| Fan Type | Pulses/Rev | `edges` Setting |
+|----------|------------|-----------------|
+| 1-pole   | 1          | `edges=3`       |
+| 2-pole   | 2          | `edges=5` (default) |
+| 3-pole   | 3          | `edges=7`       |
+| 4-pole   | 4          | `edges=9`       |
+
+**How to determine**: Check fan datasheet for "FG Signal" or "Tachometer" specification.
+Many fans produce 2 pulses per revolution (use `edges=5`), but some high-speed fans
+produce only 1 pulse per revolution (use `edges=3`).
+
+**Example configuration:**
+```python
+from emc2305.driver.emc2305 import EMC2305, FanConfig
+from emc2305.driver.i2c import I2CBus
+
+bus = I2CBus(bus_number=0)
+controller = EMC2305(i2c_bus=bus, device_address=0x4D)
+
+# For 1-pulse-per-revolution fan:
+config = FanConfig(edges=3)
+controller.configure_fan(1, config)
+
+rpm = controller.get_current_rpm(1)
+print(f"RPM: {rpm}")
+```
+
+**Diagnostic tip**: If RPM readings are incorrect, try different `edges` values and compare
+with expected fan speed. The correct setting will give readings that scale linearly with PWM.
+
+### 8. TACH Pull-up Resistor Requirement
+**EMC2305 TACH pins are open-drain inputs** and require external pull-up resistors.
+
+**Recommended**: 10k ohm pull-up to 3.3V (same as EMC2305 VDD).
+
+Without proper pull-up, TACH readings will be incorrect or saturated.
+
+### 9. RPM Calculation Formula (Fixed 2025-11-25)
+The driver uses the corrected EMC2305 RPM formula:
+
+```
+RPM = ((edges - 1) * TACH_FREQ * 60) / (TACH_COUNT * poles)
+```
+
+Where:
+- `edges` = Tachometer edges setting (3, 5, 7, or 9)
+- `TACH_FREQ` = 32000 Hz (internal) or 32768 Hz (external clock)
+- `TACH_COUNT` = Raw register value right-shifted by 3 bits
+- `poles` = (edges - 1) / 2
+
+The 3-bit right shift on TACH_COUNT accounts for the register format where
+the low register stores the count in bits 7:3 (3 LSBs unused).
+
+### 10. Register Readback Quantization (Known Behavior)
 **Date Verified:** 2025-11-24
 **Hardware:** CGW-LED-FAN-CTRL-4-REV1, EMC2305 Rev 0x80
 

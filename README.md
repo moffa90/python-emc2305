@@ -81,13 +81,18 @@ pip install microchip-emc2305[dev]
 
 ```python
 from emc2305.driver.i2c import I2CBus
-from emc2305.driver.emc2305 import EMC2305
+from emc2305.driver.emc2305 import EMC2305, FanConfig
 
 # Initialize I2C bus (with cross-process locking)
 i2c_bus = I2CBus(bus_number=0)
 
-# Initialize EMC2305 at default address 0x61
-fan_controller = EMC2305(i2c_bus, device_address=0x61)
+# Initialize EMC2305 at default address 0x4D
+fan_controller = EMC2305(i2c_bus, device_address=0x4D)
+
+# Configure tachometer for your fan type (IMPORTANT for accurate RPM!)
+# edges=3 for 1-pulse/rev, edges=5 for 2-pulse/rev (default), edges=9 for 4-pulse/rev
+config = FanConfig(edges=3)  # Adjust based on your fan's tachometer
+fan_controller.configure_fan(channel=1, config=config)
 
 # Set fan 1 to 75% duty cycle
 fan_controller.set_pwm_duty_cycle(channel=1, percent=75.0)
@@ -151,6 +156,75 @@ if fan_controller.is_alert_active():
     # Clear alert status
     fan_controller.clear_alert_status()
 ```
+
+---
+
+## Tachometer Configuration
+
+### Understanding the `edges` Parameter
+
+The `edges` parameter is **critical** for accurate RPM readings. It must match your fan's tachometer signal:
+
+| Fan Type | Pulses/Revolution | `edges` Setting |
+|----------|-------------------|-----------------|
+| 1-pole   | 1                 | `edges=3`       |
+| 2-pole   | 2                 | `edges=5` (default) |
+| 3-pole   | 3                 | `edges=7`       |
+| 4-pole   | 4                 | `edges=9`       |
+
+**How to determine your fan's pulse count:**
+1. Check the fan datasheet for "FG Signal" or "Tachometer" specification
+2. Or use trial and error: the correct setting gives RPM readings that scale linearly with PWM
+
+### Example: Configuring for Different Fan Types
+
+```python
+from emc2305.driver.emc2305 import EMC2305, FanConfig
+from emc2305.driver.i2c import I2CBus
+
+bus = I2CBus(bus_number=0)
+controller = EMC2305(i2c_bus=bus, device_address=0x4D)
+
+# For a 1-pulse-per-revolution fan (common in high-speed fans)
+config_1pole = FanConfig(edges=3)
+controller.configure_fan(1, config_1pole)
+
+# For a standard 2-pulse-per-revolution fan
+config_2pole = FanConfig(edges=5)
+controller.configure_fan(2, config_2pole)
+
+# For a 4-pulse-per-revolution fan (some server fans)
+config_4pole = FanConfig(edges=9)
+controller.configure_fan(3, config_4pole)
+```
+
+### Diagnosing Incorrect RPM Readings
+
+If your RPM readings seem wrong (too high, too low, or not scaling with PWM):
+
+```python
+# Test different edges configurations
+import time
+
+controller.set_pwm_duty_cycle(1, 100)  # Set to full speed
+time.sleep(2)  # Wait for fan to stabilize
+
+for edges in [3, 5, 7, 9]:
+    config = FanConfig(edges=edges)
+    controller.configure_fan(1, config)
+    time.sleep(0.5)
+    rpm = controller.get_current_rpm(1)
+    print(f"edges={edges}: {rpm} RPM")
+
+# The correct setting will show a reasonable RPM that matches
+# your fan's rated speed at 100% PWM
+```
+
+### Hardware Requirements for Tachometer
+
+- **Pull-up resistor**: EMC2305 TACH pins are open-drain and require a 10kΩ pull-up to 3.3V
+- **Signal voltage**: TACH signal should swing from 0V to VDD (typically 3.3V)
+- **Wiring**: Connect fan's TACH wire to EMC2305's TACHx pin for the corresponding channel
 
 ---
 

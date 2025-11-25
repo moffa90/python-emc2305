@@ -496,6 +496,11 @@ TACH_COUNT_HIGH_MASK = 0x1F
 TACH_COUNT_HIGH_SHIFT = 8
 """Bit shift for high byte of tachometer count (bits 12-8)"""
 
+TACH_COUNT_LOW_SHIFT = 3
+"""Bit shift for low byte of tachometer count (3 LSBs are not used).
+The TACH_READING_LOW register stores the count in bits 7:3, so we need
+to shift right by 3 to get the actual count value."""
+
 VALID_TACH_HIGH_SHIFT = 8
 """Bit shift for high byte of valid tachometer count"""
 
