@@ -35,6 +35,7 @@ jobs:
     
     - name: Check formatting with black
       run: |
+        black --diff emc2305/ tests/ || true
         black --check emc2305/ tests/
     
     - name: Check import sorting with isort
