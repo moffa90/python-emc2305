@@ -1,0 +1,111 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "microchip-emc2305"
+version = "0.1.0"
+description = "Python driver for Microchip EMC2305 5-channel PWM fan controller"
+readme = "README.md"
+authors = [
+    {name = "Jose Luis Moffa", email = "moffa3@gmail.com"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: System :: Hardware :: Hardware Drivers",
+    "Topic :: Software Development :: Embedded Systems",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: POSIX :: Linux",
+]
+keywords = ["emc2305", "microchip", "fan", "controller", "pwm", "i2c", "hardware", "driver", "smbus"]
+requires-python = ">=3.9"
+dependencies = [
+    "smbus2>=0.4.0",
+    "filelock>=3.12.0",
+]
+
+[project.optional-dependencies]
+config = ["PyYAML>=6.0"]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "black>=23.0",
+    "isort>=5.12",
+    "mypy>=1.5",
+    "ruff>=0.1.0",
+]
+grpc = [
+    "grpcio>=1.60.0",
+    "grpcio-tools>=1.60.0",
+    "protobuf>=4.25.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/moffa90/python-emc2305"
+Documentation = "https://github.com/moffa90/python-emc2305"
+Repository = "https://github.com/moffa90/python-emc2305"
+"Bug Tracker" = "https://github.com/moffa90/python-emc2305/issues"
+
+[tool.setuptools]
+packages = ["emc2305", "emc2305.driver", "emc2305.proto", "emc2305.server"]
+
+[tool.setuptools.package-data]
+emc2305 = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=emc2305 --cov-report=term-missing --cov-report=html"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+    "B904",  # raise from in except clause (too many changes needed)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__.py

@@ -4,13 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Cellgain Ventus** - Production-ready I2C fan controller system for embedded Linux platforms. Provides fan speed control, RPM monitoring, and temperature sensing capabilities.
+**Python EMC2305** - Production-ready I2C fan controller driver for embedded Linux platforms. Provides fan speed control, RPM monitoring, and temperature sensing capabilities for the Microchip EMC2305 chip.
 
-**Hardware:** [TBD - Add board name and specifications]
+**Hardware:**
+- **Board:** CGW-LED-FAN-CTRL-4-REV1
+- **Controller:** EMC2305-1-APTR (5-channel PWM fan controller)
+- **I2C Address:** 0x4D (default)
+- **Power Rails:** 3.3V (EMC2305 VDD), 5V (Fan power)
 
 **Target Platform:** Multiplatform Linux (Banana Pi, Raspberry Pi, generic Linux systems with I2C support)
 
-**Current Phase:** Phase 1 - Core Driver Development
+**Current Phase:** Phase 1 - Core Driver Development (Completed with critical fixes)
 
 ## Development Commands
 
@@ -83,7 +87,7 @@ pip3 install -e ".[dev]"
 - **Implementation**: File-based advisory locks using `filelock` library
 - **Lock file**: `/var/lock/i2c-[bus].lock` (configurable)
 - **Timeout**: 5 seconds (default, configurable)
-- **Wraps every I2C read/write operation** in `ventus/driver/i2c.py`
+- **Wraps every I2C read/write operation** in `emc2305/driver/i2c.py`
 
 **2. Thread Safety**
 - Device-level locks for concurrent access
@@ -104,13 +108,13 @@ pip3 install -e ".[dev]"
 ## Important Files
 
 ### Core Hardware Interface
-- `ventus/driver/i2c.py` - Low-level I2C communication with cross-process bus locking
-- `ventus/driver/[chip].py` - Main fan controller driver (chip-specific)
-- `ventus/driver/constants.py` - Hardware constants (addresses, registers, timing)
+- `emc2305/driver/i2c.py` - Low-level I2C communication with cross-process bus locking
+- `emc2305/driver/[chip].py` - Main fan controller driver (chip-specific)
+- `emc2305/driver/constants.py` - Hardware constants (addresses, registers, timing)
 
 ### Configuration
-- `ventus/settings.py` - Configuration dataclasses and file loading
-- `config/ventus.yaml` - Default configuration template
+- `emc2305/settings.py` - Configuration dataclasses and file loading
+- `config/emc2305.yaml` - Default configuration template
 
 ### Documentation
 - `docs/hardware/` - Datasheets, schematics, integration guides
@@ -127,21 +131,73 @@ pip3 install -e ".[dev]"
 ### I2C Bus Sharing
 - **Multiple services may use the same I2C bus** - always use I2C locking
 - Follow the pattern established in the luminex project
-- See `ventus/driver/i2c.py` for implementation reference
+- See `emc2305/driver/i2c.py` for implementation reference
+
+## Critical EMC2305 Configuration Requirements
+
+⚠️ **IMPORTANT**: The following configuration settings are MANDATORY for EMC2305 to function correctly:
+
+### 1. GLBL_EN Bit (Register 0x20, Bit 1) - CRITICAL
+**Without this bit enabled, ALL PWM outputs are disabled regardless of individual fan settings.**
+
+This is now automatically enabled in driver initialization (`emc2305/driver/emc2305.py:231-234`).
+
+### 2. UPDATE_TIME - Must be 200ms
+**Using 500ms breaks PWM control completely.**
+
+Default is now correctly set to 200ms (`emc2305/driver/constants.py:589`, `emc2305/driver/emc2305.py:58`).
+
+### 3. Drive Fail Band Registers - Corrected Addresses
+**Some datasheets have incorrect register addresses.**
+
+- `REG_FAN1_DRIVE_FAIL_BAND_LOW = 0x3A` (NOT 0x3B)
+- `REG_FAN1_DRIVE_FAIL_BAND_HIGH = 0x3B` (NOT 0x3C)
+
+### 4. PWM Voltage Levels - Hardware Consideration
+⚠️ **EMC2305 outputs 3.3V PWM logic (VDD = 3.3V)**
+
+If using 5V PWM fans, a hardware level shifter circuit is required (MOSFET-based or IC-based like TXB0104).
+
+### 5. PWM Polarity - Fan-Specific
+Different fans use different PWM logic:
+- **Active Low (standard)**: LOW = run, HIGH = stop → Normal polarity
+- **Active High (inverted)**: HIGH = run, LOW = stop → Inverted polarity
+
+Check fan datasheet to determine correct configuration.
+
+### 6. Minimum Drive - Unrestricted Range
+`min_drive_percent: int = 0` (changed from 20% to allow full PWM range).
+
+### 7. Register Readback Quantization (Known Behavior)
+**Date Verified:** 2025-11-24
+**Hardware:** CGW-LED-FAN-CTRL-4-REV1, EMC2305 Rev 0x80
+
+PWM register readback exhibits minor quantization anomaly at specific duty cycles:
+- **25% (0x40) reads back as ~30% (0x4C)**
+- All other tested values (0%, 50%, 75%, 100%) read back correctly
+- **Physical PWM signal is CORRECT** - verified with oscilloscope
+- **Fan operation is CORRECT** - no functional impact
+- Anomaly appears to be internal hardware quantization, not a driver issue
+
+**Impact:** None for production use. Register readback is 80% accurate (4/5 test points).
+
+**Driver Enhancement:** Added `set_pwm_duty_cycle_verified()` method with configurable tolerance for applications requiring readback validation.
+
+**Reference:** `docs/development/register-readback-findings.md` for comprehensive analysis
 
 ## Common Patterns
 
 ### Adding New Features
 
-1. **New I2C register operations**: Add to appropriate driver file in `ventus/driver/`
-2. **New configuration options**: Add to `ventus/settings.py` with validation
+1. **New I2C register operations**: Add to appropriate driver file in `emc2305/driver/`
+2. **New configuration options**: Add to `emc2305/settings.py` with validation
 3. **New examples**: Add to `examples/python/` with clear documentation
 4. **New tests**: Add to `tests/` following existing test patterns
 
 ### Working with I2C
 
 ```python
-from ventus.driver.i2c import I2CBus
+from emc2305.driver.i2c import I2CBus
 
 # Initialize I2C bus with locking
 bus = I2CBus(bus_number=0, lock_enabled=True)
@@ -277,7 +333,7 @@ Some devices require specific I2C bus speeds. Configure via device tree or kerne
 ## Hardware Integration Notes
 
 ### I2C Communication
-- Always use the I2C locking mechanism from `ventus/driver/i2c.py`
+- Always use the I2C locking mechanism from `emc2305/driver/i2c.py`
 - Handle I2C timeouts and retry logic
 - Validate register addresses and values
 - Check device presence before operations
@@ -307,7 +363,7 @@ This project follows patterns established in:
 i2cdetect -y 0
 
 # Test basic communication
-python3 -m ventus.driver.test_basic
+python3 -m emc2305.driver.test_basic
 
 # Run examples
 python3 examples/python/test_fan_control.py
@@ -317,8 +373,8 @@ pip3 install -e .
 ```
 
 ### Configuration Locations
-- **User config**: `~/.config/ventus/ventus.yaml`
-- **System config**: `/etc/ventus/ventus.yaml`
+- **User config**: `~/.config/emc2305/emc2305.yaml`
+- **System config**: `/etc/emc2305/emc2305.yaml`
 - **Lock files**: `/var/lock/i2c-*.lock`
 
 ## Summary for AI Assistants
