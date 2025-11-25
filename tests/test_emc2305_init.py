@@ -18,14 +18,14 @@ Environment Variables:
     TEST_DEVICE_ADDRESS: EMC2305 I2C address in hex (default: 0x61)
 """
 
+import logging
 import os
 import sys
-import logging
 import time
 
-from emc2305.driver.i2c import I2CBus
-from emc2305.driver.emc2305 import EMC2305, EMC2305Error, EMC2305DeviceNotFoundError
 from emc2305.driver import constants as const
+from emc2305.driver.emc2305 import EMC2305, EMC2305DeviceNotFoundError, EMC2305Error
+from emc2305.driver.i2c import I2CBus
 
 # Configure logging
 logging.basicConfig(
@@ -254,7 +254,7 @@ def main():
     bus_number = int(os.getenv("TEST_I2C_BUS", "0"))
     address = int(os.getenv("TEST_DEVICE_ADDRESS", "0x61"), 16)
 
-    logger.info(f"Test Configuration:")
+    logger.info("Test Configuration:")
     logger.info(f"  I2C Bus: {bus_number}")
     logger.info(f"  Device Address: 0x{address:02X}")
     logger.info("")

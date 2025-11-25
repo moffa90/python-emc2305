@@ -9,9 +9,9 @@ Handles loading and saving configuration for EMC2305 fan controller.
 
 import logging
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Optional, Dict
 from enum import Enum
+from pathlib import Path
+from typing import Dict, Optional
 
 try:
     import yaml
@@ -172,7 +172,7 @@ class ConfigManager:
             return self.config
 
         try:
-            with open(self.config_path, "r") as f:
+            with open(self.config_path) as f:
                 data = yaml.safe_load(f)
 
             if data is None:

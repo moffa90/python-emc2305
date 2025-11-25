@@ -9,15 +9,16 @@ Tests driver logic without requiring actual hardware using mock I2C bus.
 
 import pytest
 from mock_i2c import MockI2CBus
+
+from emc2305.driver import constants as const
 from emc2305.driver.emc2305 import (
     EMC2305,
     ControlMode,
-    FanStatus,
-    FanConfig,
     EMC2305DeviceNotFoundError,
     EMC2305ValidationError,
+    FanConfig,
+    FanStatus,
 )
-from emc2305.driver import constants as const
 
 
 @pytest.fixture

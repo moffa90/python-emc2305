@@ -10,7 +10,7 @@ Provides low-level I2C communication with cross-process locking support.
 import logging
 import time
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any, Optional
 
 try:
     import smbus2
@@ -21,15 +21,15 @@ from filelock import FileLock, Timeout
 
 from emc2305.driver.constants import (
     DEFAULT_I2C_BUS,
-    DEFAULT_I2C_LOCK_TIMEOUT,
     DEFAULT_I2C_LOCK_PATH,
-    READ_DELAY_MS,
-    WRITE_DELAY_MS,
-    MIN_I2C_ADDRESS,
+    DEFAULT_I2C_LOCK_TIMEOUT,
     MAX_I2C_ADDRESS,
-    MIN_REGISTER_ADDRESS,
     MAX_REGISTER_ADDRESS,
+    MIN_I2C_ADDRESS,
+    MIN_REGISTER_ADDRESS,
+    READ_DELAY_MS,
     SMBUS_BLOCK_MAX_LENGTH,
+    WRITE_DELAY_MS,
 )
 
 logger = logging.getLogger(__name__)

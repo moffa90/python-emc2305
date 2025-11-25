@@ -19,14 +19,14 @@ Features:
 """
 
 import logging
-import time
 import threading
-from enum import Enum
-from typing import Optional, Dict, Any
+import time
 from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, Optional
 
-from emc2305.driver.i2c import I2CBus, I2CError
 from emc2305.driver import constants as const
+from emc2305.driver.i2c import I2CBus, I2CError
 
 logger = logging.getLogger(__name__)
 

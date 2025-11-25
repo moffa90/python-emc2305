@@ -10,6 +10,7 @@ without requiring actual hardware.
 
 import threading
 from typing import Dict, Optional
+
 from emc2305.driver.i2c import I2CError
 
 
