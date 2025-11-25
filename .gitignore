@@ -54,6 +54,7 @@ htmlcov/
 # Configuration
 *.toml
 !config/*.toml
+!pyproject.toml
 
 # Deployment
 *.tar.gz
