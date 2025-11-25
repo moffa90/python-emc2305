@@ -399,6 +399,14 @@ Copyright (c) 2025 Contributors to the microchip-emc2305 project
 
 ---
 
+## Donate
+
+If you find this project useful, consider supporting its development:
+
+[![PayPal](https://img.shields.io/badge/PayPal-Donate-blue.svg?logo=paypal)](https://paypal.me/moffax)
+
+---
+
 ## Acknowledgments
 
 This driver implements the complete EMC2305 register map and feature set as documented in the Microchip datasheet. Special thanks to the community contributors who helped validate and improve this driver.
