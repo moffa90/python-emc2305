@@ -518,7 +518,9 @@ class EMC2305:
         if config.drive_fail_band_rpm > 0:
             # Calculate tach count at (target - band) to get the count difference
             # This represents how much the tach count can deviate below target
-            drive_fail_band_count = self._rpm_to_tach_count(config.drive_fail_band_rpm, config.edges)
+            drive_fail_band_count = self._rpm_to_tach_count(
+                config.drive_fail_band_rpm, config.edges
+            )
 
             # Drive Fail Band Low Byte (0x3B) - bits 7:3 of count
             drive_fail_low = (drive_fail_band_count >> const.DRIVE_FAIL_LOW_SHIFT) & const.BYTE_MASK
@@ -982,7 +984,7 @@ class EMC2305:
                 if open_drain:
                     new_config = current & ~bit_mask  # Clear bit for open-drain
                 else:
-                    new_config = current | bit_mask   # Set bit for push-pull
+                    new_config = current | bit_mask  # Set bit for push-pull
 
                 self.i2c_bus.write_byte(self.address, const.REG_PWM_OUTPUT_CONFIG, new_config)
                 logger.debug(
