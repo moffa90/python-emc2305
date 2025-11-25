@@ -10,13 +10,12 @@ readme = "README.md"
 authors = [
     {name = "Jose Luis Moffa", email = "moffa3@gmail.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Topic :: System :: Hardware :: Hardware Drivers",
     "Topic :: Software Development :: Embedded Systems",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
