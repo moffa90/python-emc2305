@@ -595,8 +595,8 @@ DEFAULT_SPIN_UP_LEVEL = SPIN_UP_LEVEL_50_PERCENT
 DEFAULT_MINIMUM_DRIVE = 51
 """Default minimum drive level (20% = 51/255)"""
 
-DEFAULT_MAX_STEP = 255
-"""Default maximum step size (no limiting)"""
+DEFAULT_MAX_STEP = 31
+"""Default maximum step size (valid range: 0-63 per hardware specification)"""
 
 DEFAULT_PWM_FREQUENCY = PWM_FREQ_26000HZ
 """Default PWM base frequency (26 kHz)"""

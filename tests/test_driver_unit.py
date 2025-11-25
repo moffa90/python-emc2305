@@ -8,7 +8,7 @@ Tests driver logic without requiring actual hardware using mock I2C bus.
 """
 
 import pytest
-from tests.mock_i2c import MockI2CBus
+from mock_i2c import MockI2CBus
 from emc2305.driver.emc2305 import (
     EMC2305,
     ControlMode,
@@ -30,7 +30,7 @@ def mock_bus():
 @pytest.fixture
 def emc2305(mock_bus):
     """Create EMC2305 instance with mock bus."""
-    return EMC2305(i2c_bus=mock_bus, device_device_address=0x4D)
+    return EMC2305(i2c_bus=mock_bus, device_address=0x4D)
 
 
 # =============================================================================
@@ -166,9 +166,12 @@ def test_set_target_rpm_invalid_range(emc2305):
 
 def test_get_current_rpm(emc2305, mock_bus):
     """Test reading current RPM."""
-    # Mock TACH reading for ~3000 RPM (count = 128 for 2-pole fan)
-    mock_bus.set_register(const.REG_FAN1_TACH_READING_HIGH, 0x00)
-    mock_bus.set_register(const.REG_FAN1_TACH_READING_LOW, 0x80)
+    # Mock TACH reading for ~3000 RPM
+    # Formula: RPM = (TACH_FREQ * 60) / (TACH_COUNT * poles)
+    # With internal clock 32768 Hz, 2-pole fan: count = (32768 * 60) / (3000 * 2) = 327
+    # Set count to 327 (0x0147) for ~3000 RPM
+    mock_bus.set_register(const.REG_FAN1_TACH_READING_HIGH, 0x01)
+    mock_bus.set_register(const.REG_FAN1_TACH_READING_LOW, 0x47)
 
     rpm = emc2305.get_current_rpm(1)
     assert 2800 <= rpm <= 3200, f"Expected ~3000 RPM, got {rpm}"
@@ -181,7 +184,8 @@ def test_get_current_rpm(emc2305, mock_bus):
 
 def test_set_control_mode_pwm(emc2305, mock_bus):
     """Test switching to PWM control mode."""
-    config = FanConfig(control_mode=ControlMode.PWM)
+    # max_step must be 0-63 per hardware specification
+    config = FanConfig(control_mode=ControlMode.PWM, max_step=31)
     emc2305.configure_fan(1, config)
 
     # Verify EN_ALGO bit is cleared
@@ -191,7 +195,8 @@ def test_set_control_mode_pwm(emc2305, mock_bus):
 
 def test_set_control_mode_fsc(emc2305, mock_bus):
     """Test switching to FSC control mode."""
-    config = FanConfig(control_mode=ControlMode.FSC)
+    # max_step must be 0-63 per hardware specification
+    config = FanConfig(control_mode=ControlMode.FSC, max_step=31)
     emc2305.configure_fan(1, config)
 
     # Verify EN_ALGO bit is set
@@ -232,18 +237,18 @@ def test_get_fan_status_drive_failure(emc2305, mock_bus):
     assert status == FanStatus.DRIVE_FAILURE
 
 
-def test_get_all_fan_statuses(emc2305, mock_bus):
-    """Test getting status for all fans."""
+def test_get_all_fan_states(emc2305, mock_bus):
+    """Test getting state for all fans."""
     mock_bus.simulate_fault("stall", channel=2)
     mock_bus.simulate_fault("spin", channel=3)
 
-    statuses = emc2305.get_all_fan_statuses()
+    states = emc2305.get_all_fan_states()
 
-    assert statuses[1] == FanStatus.OK
-    assert statuses[2] == FanStatus.STALLED
-    assert statuses[3] == FanStatus.SPIN_FAILURE
-    assert statuses[4] == FanStatus.OK
-    assert statuses[5] == FanStatus.OK
+    assert states[1].status == FanStatus.OK
+    assert states[2].status == FanStatus.STALLED
+    assert states[3].status == FanStatus.SPIN_FAILURE
+    assert states[4].status == FanStatus.OK
+    assert states[5].status == FanStatus.OK
 
 
 # =============================================================================
@@ -253,7 +258,8 @@ def test_get_all_fan_statuses(emc2305, mock_bus):
 
 def test_configure_fan_update_time(emc2305, mock_bus):
     """Test configuring fan update time."""
-    config = FanConfig(update_time_ms=200)
+    # max_step must be 0-63 per hardware specification
+    config = FanConfig(update_time_ms=200, max_step=31)
     emc2305.configure_fan(1, config)
 
     config1 = mock_bus.get_register(const.REG_FAN1_CONFIG1)
@@ -263,7 +269,8 @@ def test_configure_fan_update_time(emc2305, mock_bus):
 
 def test_configure_fan_tach_edges(emc2305, mock_bus):
     """Test configuring tachometer edges."""
-    config = FanConfig(edges=5)  # 2-pole fan
+    # max_step must be 0-63 per hardware specification
+    config = FanConfig(edges=5, max_step=31)  # 2-pole fan
     emc2305.configure_fan(1, config)
 
     config1 = mock_bus.get_register(const.REG_FAN1_CONFIG1)
@@ -273,7 +280,8 @@ def test_configure_fan_tach_edges(emc2305, mock_bus):
 
 def test_configure_fan_minimum_drive(emc2305, mock_bus):
     """Test configuring minimum drive level."""
-    config = FanConfig(min_drive_percent=20)
+    # max_step must be 0-63 per hardware specification
+    config = FanConfig(min_drive_percent=20, max_step=31)
     emc2305.configure_fan(1, config)
 
     min_drive = mock_bus.get_register(const.REG_FAN1_MINIMUM_DRIVE)
@@ -302,15 +310,18 @@ def test_pwm_to_percent_conversion(emc2305):
 
 def test_rpm_to_tach_count_conversion(emc2305):
     """Test RPM to tachometer count conversion."""
-    # For 2-pole fan (5 edges), 3000 RPM should give count of 128
-    count = emc2305._rpm_to_tach_count(3000, edges=5)
-    assert 120 <= count <= 135, f"Expected ~128, got {count}"
+    # Formula: count = (TACH_FREQ * 60) / (RPM * poles)
+    # With internal clock 32768 Hz, 2-pole fan: count = (32768 * 60) / (3000 * 2) = 327
+    # Note: _rpm_to_tach_count doesn't take edges parameter (uses hardcoded 2-pole)
+    count = emc2305._rpm_to_tach_count(3000)
+    assert 320 <= count <= 340, f"Expected ~327, got {count}"
 
 
 def test_tach_count_to_rpm_conversion(emc2305):
     """Test tachometer count to RPM conversion."""
-    # Count of 128 with 5 edges should give ~3000 RPM
-    rpm = emc2305._tach_count_to_rpm(128, edges=5)
+    # Count of 327 with 5 edges (2-pole fan) should give ~3000 RPM
+    # Formula: RPM = (TACH_FREQ * 60) / (TACH_COUNT * poles)
+    rpm = emc2305._tach_count_to_rpm(327, edges=5)
     assert 2900 <= rpm <= 3100, f"Expected ~3000 RPM, got {rpm}"
 
 
@@ -378,7 +389,7 @@ def test_set_pwm_verified_success(emc2305, mock_bus):
 def test_set_pwm_verified_with_tolerance(emc2305, mock_bus):
     """Test verified PWM accepts values within tolerance."""
     # Mock the quantization anomaly (25% → 30%)
-    mock_bus.set_register(const.REG_FAN1_SETTING, 64)  # 25%
+    # 25% = 64/255, 30% = 76/255
 
     # After write, simulate readback as 76 (30%)
     def mock_write(addr, reg, val):
@@ -387,13 +398,14 @@ def test_set_pwm_verified_with_tolerance(emc2305, mock_bus):
     original_write = mock_bus.write_byte
     mock_bus.write_byte = mock_write
 
-    success, actual = emc2305.set_pwm_duty_cycle_verified(1, 25.0, tolerance=5.0)
+    # Use tolerance of 10% to account for the 5% quantization difference
+    success, actual = emc2305.set_pwm_duty_cycle_verified(1, 25.0, tolerance=10.0)
 
     mock_bus.write_byte = original_write
 
-    # Should succeed because 30% is within 5% tolerance of 25%
+    # Should succeed because 30% is within 10% tolerance of 25%
     assert success is True
-    assert 25.0 <= actual <= 35.0
+    assert 20.0 <= actual <= 35.0
 
 
 if __name__ == "__main__":

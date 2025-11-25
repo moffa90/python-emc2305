@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """
-Basic I2C Communication Test
+Basic I2C Hardware Integration Test - NOT for pytest
 
-Tests basic I2C communication with the EMC2305 device.
-Verifies device detection, product/manufacturer ID, and basic read/write operations.
+This script tests basic I2C communication with real EMC2305 hardware.
+It is meant to be run directly from the command line, NOT via pytest.
+The functions return True/False values which are collected by main()
+and used to determine the exit code.
+
+For pytest unit tests (mock-based, no hardware required), see:
+    tests/test_driver_unit.py
 
 Usage:
     PYTHONPATH=. python3 tests/test_i2c_basic.py

@@ -484,16 +484,12 @@ class EMC2305:
         )
 
         # Set valid TACH count for stall detection
-        valid_tach = config.valid_tach_count
+        # Note: Valid TACH Count is a single 8-bit register (not 16-bit)
+        valid_tach = config.valid_tach_count & const.BYTE_MASK
         self.i2c_bus.write_byte(
             self.address,
             base + (const.REG_FAN1_VALID_TACH_COUNT - const.REG_FAN1_SETTING),
-            (valid_tach >> const.VALID_TACH_HIGH_SHIFT) & const.BYTE_MASK  # MSB
-        )
-        self.i2c_bus.write_byte(
-            self.address,
-            base + (const.REG_FAN1_VALID_TACH_COUNT_LSB - const.REG_FAN1_SETTING),
-            valid_tach & const.BYTE_MASK  # LSB
+            valid_tach
         )
 
         # Set Drive Fail Band for aging fan detection

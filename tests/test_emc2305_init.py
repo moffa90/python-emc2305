@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 """
-EMC2305 Initialization Test
+EMC2305 Hardware Integration Test - NOT for pytest
 
-Tests EMC2305 driver initialization, configuration, and basic functionality.
+This script tests against real EMC2305 hardware and is meant to be run
+directly from the command line, NOT via pytest. The functions return
+True/False values which are collected by main() and used to determine
+the exit code.
+
+For pytest unit tests (mock-based, no hardware required), see:
+    tests/test_driver_unit.py
 
 Usage:
     PYTHONPATH=. python3 tests/test_emc2305_init.py
