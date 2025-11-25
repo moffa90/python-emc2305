@@ -94,8 +94,8 @@ def main():
         try:
             # Set fan to safe speed before exit
             fan_controller.set_pwm_duty_cycle(1, 30)
-        except:
-            pass
+        except Exception:
+            pass  # Ignore cleanup errors - fan_controller may not exist
 
 
 if __name__ == "__main__":

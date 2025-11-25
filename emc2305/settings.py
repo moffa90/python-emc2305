@@ -8,9 +8,9 @@ Handles loading and saving configuration for EMC2305 fan controller.
 """
 
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 from enum import Enum
 
 try:

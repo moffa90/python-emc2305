@@ -14,7 +14,6 @@ from emc2305.driver.emc2305 import (
     ControlMode,
     FanStatus,
     FanConfig,
-    EMC2305Error,
     EMC2305DeviceNotFoundError,
     EMC2305ValidationError,
 )

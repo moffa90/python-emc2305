@@ -126,8 +126,8 @@ def main():
         try:
             # Set fan to safe idle speed
             fan_controller.set_target_rpm(1, 1500)
-        except:
-            pass
+        except Exception:
+            pass  # Ignore cleanup errors - fan_controller may not exist
 
 
 if __name__ == "__main__":

@@ -155,8 +155,8 @@ def main():
         for channel in range(1, 6):
             try:
                 fan_controller.set_pwm_duty_cycle(channel, 50)
-            except:
-                pass
+            except Exception:
+                pass  # Ignore errors for channels without fans
 
         time.sleep(3)
 
@@ -188,10 +188,10 @@ def main():
             for channel in range(1, 6):
                 try:
                     fan_controller.set_pwm_duty_cycle(channel, 40)
-                except:
-                    pass
-        except:
-            pass
+                except Exception:
+                    pass  # Ignore errors for channels without fans
+        except Exception:
+            pass  # Ignore cleanup errors - fan_controller may not exist
 
 
 if __name__ == "__main__":
