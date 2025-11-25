@@ -29,8 +29,7 @@ from emc2305.driver import constants as const
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -91,9 +90,7 @@ def test_fan_channels_accessible():
             rpm = fan_controller.get_current_rpm(channel)
             status = fan_controller.get_fan_status(channel)
 
-            logger.info(
-                f"  Fan {channel}: Duty={duty:.1f}%, RPM={rpm}, Status={status.value}"
-            )
+            logger.info(f"  Fan {channel}: Duty={duty:.1f}%, RPM={rpm}, Status={status.value}")
 
         logger.info("✓ All fan channels accessible")
 

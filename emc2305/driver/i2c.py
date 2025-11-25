@@ -37,11 +37,13 @@ logger = logging.getLogger(__name__)
 
 class I2CError(Exception):
     """Base exception for I2C communication errors."""
+
     pass
 
 
 class I2CBusLockError(I2CError):
     """Raised when I2C bus lock cannot be acquired."""
+
     pass
 
 
@@ -72,8 +74,7 @@ class I2CBus:
     ):
         if smbus2 is None:
             raise ImportError(
-                "smbus2 is required for I2C communication. "
-                "Install with: pip install smbus2"
+                "smbus2 is required for I2C communication. " "Install with: pip install smbus2"
             )
 
         self.bus_number = bus_number
@@ -153,9 +154,7 @@ class I2CBus:
             I2CError: If value is out of byte range
         """
         if not 0 <= value <= 0xFF:
-            raise I2CError(
-                f"Invalid byte value: 0x{value:X} (must be 0x00-0xFF)"
-            )
+            raise I2CError(f"Invalid byte value: 0x{value:X} (must be 0x00-0xFF)")
 
     def read_byte(self, address: int, register: int) -> int:
         """
@@ -180,9 +179,7 @@ class I2CBus:
                 with self.lock:
                     return self._read_byte_unlocked(address, register)
             except Timeout:
-                raise I2CBusLockError(
-                    f"Failed to acquire I2C bus lock within {self.lock_timeout}s"
-                )
+                raise I2CBusLockError(f"Failed to acquire I2C bus lock within {self.lock_timeout}s")
         else:
             return self._read_byte_unlocked(address, register)
 
@@ -218,9 +215,7 @@ class I2CBus:
                 with self.lock:
                     self._write_byte_unlocked(address, register, value)
             except Timeout:
-                raise I2CBusLockError(
-                    f"Failed to acquire I2C bus lock within {self.lock_timeout}s"
-                )
+                raise I2CBusLockError(f"Failed to acquire I2C bus lock within {self.lock_timeout}s")
         else:
             self._write_byte_unlocked(address, register, value)
 
@@ -249,9 +244,7 @@ class I2CBus:
                 with self.lock:
                     return self._read_word_unlocked(address, register)
             except Timeout:
-                raise I2CBusLockError(
-                    f"Failed to acquire I2C bus lock within {self.lock_timeout}s"
-                )
+                raise I2CBusLockError(f"Failed to acquire I2C bus lock within {self.lock_timeout}s")
         else:
             return self._read_word_unlocked(address, register)
 
@@ -260,7 +253,9 @@ class I2CBus:
         try:
             time.sleep(READ_DELAY_MS / 1000.0)
             value = self.bus.read_word_data(address, register)
-            logger.debug(f"I2C read word: addr=0x{address:02X} reg=0x{register:02X} -> 0x{value:04X}")
+            logger.debug(
+                f"I2C read word: addr=0x{address:02X} reg=0x{register:02X} -> 0x{value:04X}"
+            )
             return value
         except Exception as e:
             raise I2CError(f"I2C word read failed: addr=0x{address:02X} reg=0x{register:02X}: {e}")
@@ -279,9 +274,7 @@ class I2CBus:
                 with self.lock:
                     self._write_word_unlocked(address, register, value)
             except Timeout:
-                raise I2CBusLockError(
-                    f"Failed to acquire I2C bus lock within {self.lock_timeout}s"
-                )
+                raise I2CBusLockError(f"Failed to acquire I2C bus lock within {self.lock_timeout}s")
         else:
             self._write_word_unlocked(address, register, value)
 
@@ -290,7 +283,9 @@ class I2CBus:
         try:
             time.sleep(WRITE_DELAY_MS / 1000.0)
             self.bus.write_word_data(address, register, value)
-            logger.debug(f"I2C write word: addr=0x{address:02X} reg=0x{register:02X} <- 0x{value:04X}")
+            logger.debug(
+                f"I2C write word: addr=0x{address:02X} reg=0x{register:02X} <- 0x{value:04X}"
+            )
         except Exception as e:
             raise I2CError(f"I2C word write failed: addr=0x{address:02X} reg=0x{register:02X}: {e}")
 
@@ -319,9 +314,7 @@ class I2CBus:
                 with self.lock:
                     return self._read_block_unlocked(address, register, length)
             except Timeout:
-                raise I2CBusLockError(
-                    f"Failed to acquire I2C bus lock within {self.lock_timeout}s"
-                )
+                raise I2CBusLockError(f"Failed to acquire I2C bus lock within {self.lock_timeout}s")
         else:
             return self._read_block_unlocked(address, register, length)
 
@@ -330,7 +323,9 @@ class I2CBus:
         try:
             time.sleep(READ_DELAY_MS / 1000.0)
             data = self.bus.read_i2c_block_data(address, register, length)
-            logger.debug(f"I2C read block: addr=0x{address:02X} reg=0x{register:02X} len={length} -> {[hex(b) for b in data]}")
+            logger.debug(
+                f"I2C read block: addr=0x{address:02X} reg=0x{register:02X} len={length} -> {[hex(b) for b in data]}"
+            )
             return data
         except Exception as e:
             raise I2CError(f"I2C block read failed: addr=0x{address:02X} reg=0x{register:02X}: {e}")
@@ -359,9 +354,7 @@ class I2CBus:
                 with self.lock:
                     self._write_block_unlocked(address, register, data)
             except Timeout:
-                raise I2CBusLockError(
-                    f"Failed to acquire I2C bus lock within {self.lock_timeout}s"
-                )
+                raise I2CBusLockError(f"Failed to acquire I2C bus lock within {self.lock_timeout}s")
         else:
             self._write_block_unlocked(address, register, data)
 
@@ -370,9 +363,13 @@ class I2CBus:
         try:
             time.sleep(WRITE_DELAY_MS / 1000.0)
             self.bus.write_i2c_block_data(address, register, data)
-            logger.debug(f"I2C write block: addr=0x{address:02X} reg=0x{register:02X} <- {[hex(b) for b in data]}")
+            logger.debug(
+                f"I2C write block: addr=0x{address:02X} reg=0x{register:02X} <- {[hex(b) for b in data]}"
+            )
         except Exception as e:
-            raise I2CError(f"I2C block write failed: addr=0x{address:02X} reg=0x{register:02X}: {e}")
+            raise I2CError(
+                f"I2C block write failed: addr=0x{address:02X} reg=0x{register:02X}: {e}"
+            )
 
     def send_byte(self, address: int, value: int) -> None:
         """
@@ -391,9 +388,7 @@ class I2CBus:
                 with self.lock:
                     self._send_byte_unlocked(address, value)
             except Timeout:
-                raise I2CBusLockError(
-                    f"Failed to acquire I2C bus lock within {self.lock_timeout}s"
-                )
+                raise I2CBusLockError(f"Failed to acquire I2C bus lock within {self.lock_timeout}s")
         else:
             self._send_byte_unlocked(address, value)
 
@@ -425,9 +420,7 @@ class I2CBus:
                 with self.lock:
                     return self._receive_byte_unlocked(address)
             except Timeout:
-                raise I2CBusLockError(
-                    f"Failed to acquire I2C bus lock within {self.lock_timeout}s"
-                )
+                raise I2CBusLockError(f"Failed to acquire I2C bus lock within {self.lock_timeout}s")
         else:
             return self._receive_byte_unlocked(address)
 
@@ -447,11 +440,13 @@ class I2CBus:
             self.bus.close()
             logger.debug(f"I2C bus {self.bus_number} closed")
 
-    def __enter__(self) -> 'I2CBus':
+    def __enter__(self) -> "I2CBus":
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> bool:
+    def __exit__(
+        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
+    ) -> bool:
         """Context manager exit."""
         self.close()
         return False

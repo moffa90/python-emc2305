@@ -27,8 +27,7 @@ from emc2305.driver import constants as const
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -138,8 +137,7 @@ def test_register_read_write():
             logger.info("✓ Write/read verification successful")
         else:
             logger.warning(
-                f"⚠ Write/read mismatch: wrote 0x{test_value:02X}, "
-                f"read 0x{readback:02X}"
+                f"⚠ Write/read mismatch: wrote 0x{test_value:02X}, " f"read 0x{readback:02X}"
             )
 
         # Restore original value

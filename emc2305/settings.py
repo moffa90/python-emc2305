@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class ControlMode(Enum):
     """Fan control mode."""
+
     PWM = "pwm"  # Direct PWM control (0-100%)
     FSC = "fsc"  # Fan Speed Control (closed-loop RPM control)
 
@@ -32,6 +33,7 @@ class ControlMode(Enum):
 @dataclass
 class I2CConfig:
     """I2C bus configuration."""
+
     bus: int = const.DEFAULT_I2C_BUS
     lock_enabled: bool = True
     lock_timeout: float = const.DEFAULT_I2C_LOCK_TIMEOUT
@@ -41,6 +43,7 @@ class I2CConfig:
 @dataclass
 class FanChannelConfig:
     """Configuration for a single fan channel."""
+
     name: str = "Fan"
     enabled: bool = True
     control_mode: str = "pwm"  # "pwm" or "fsc"
@@ -76,6 +79,7 @@ class FanChannelConfig:
 @dataclass
 class EMC2305Config:
     """EMC2305 device configuration."""
+
     name: str = "EMC2305 Fan Controller"
     address: int = const.DEFAULT_DEVICE_ADDRESS
     enabled: bool = True
@@ -99,14 +103,13 @@ class EMC2305Config:
         """Initialize default fan configurations if not provided."""
         if not self.fans:
             for channel in range(1, const.NUM_FAN_CHANNELS + 1):
-                self.fans[channel] = FanChannelConfig(
-                    name=f"Fan {channel}"
-                )
+                self.fans[channel] = FanChannelConfig(name=f"Fan {channel}")
 
 
 @dataclass
 class DriverConfig:
     """Main driver configuration."""
+
     i2c: I2CConfig = field(default_factory=I2CConfig)
     emc2305: EMC2305Config = field(default_factory=EMC2305Config)
 
@@ -236,9 +239,7 @@ class ConfigManager:
                 # Initialize missing fan channels with defaults
                 for channel in range(1, const.NUM_FAN_CHANNELS + 1):
                     if channel not in self.config.emc2305.fans:
-                        self.config.emc2305.fans[channel] = FanChannelConfig(
-                            name=f"Fan {channel}"
-                        )
+                        self.config.emc2305.fans[channel] = FanChannelConfig(name=f"Fan {channel}")
 
             # Load global settings
             self.config.log_level = data.get("log_level", "INFO")

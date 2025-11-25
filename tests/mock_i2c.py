@@ -165,9 +165,7 @@ class MockI2CBus:
         with self._lock:
             self._registers[register] = value
 
-    def read_block(
-        self, device_address: int, register: int, length: int
-    ) -> bytes:
+    def read_block(self, device_address: int, register: int, length: int) -> bytes:
         """
         Read block of bytes starting from register.
 
@@ -198,9 +196,7 @@ class MockI2CBus:
                     data.append(0x00)
             return bytes(data)
 
-    def write_block(
-        self, device_address: int, register: int, data: bytes
-    ) -> None:
+    def write_block(self, device_address: int, register: int, data: bytes) -> None:
         """
         Write block of bytes starting from register.
 

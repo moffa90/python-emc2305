@@ -33,12 +33,14 @@ logger = logging.getLogger(__name__)
 
 class ControlMode(Enum):
     """Fan control mode."""
+
     PWM = "pwm"  # Direct PWM control (0-100%)
     FSC = "fsc"  # Fan Speed Control (closed-loop RPM control)
 
 
 class FanStatus(Enum):
     """Fan operational status."""
+
     OK = "ok"
     STALLED = "stalled"
     SPIN_FAILURE = "spin_failure"
@@ -49,13 +51,16 @@ class FanStatus(Enum):
 @dataclass
 class FanConfig:
     """Configuration for a single fan channel."""
+
     enabled: bool = True
     control_mode: ControlMode = ControlMode.PWM
     min_rpm: int = const.MIN_RPM
     max_rpm: int = const.MAX_RPM
     min_drive_percent: int = 0  # Changed from 20 to 0 for unrestricted PWM control
     max_step: int = const.DEFAULT_MAX_STEP
-    update_time_ms: int = 200  # CRITICAL: 500ms breaks PWM control! Must use 200ms (factory default)
+    update_time_ms: int = (
+        200  # CRITICAL: 500ms breaks PWM control! Must use 200ms (factory default)
+    )
     edges: int = 5  # Tachometer edges (3/5/7/9 for 1/2/3/4-pole fans)
     spin_up_level_percent: int = 50
     spin_up_time_ms: int = 500
@@ -73,12 +78,15 @@ class FanConfig:
 
     # Drive Fail Band Settings (Aging Fan Detection)
     drive_fail_band_rpm: int = 0  # RPM band for aging fan detection (0 = disabled)
-    valid_tach_count: int = const.DEFAULT_VALID_TACH_COUNT  # Minimum valid tach count for stall detection
+    valid_tach_count: int = (
+        const.DEFAULT_VALID_TACH_COUNT
+    )  # Minimum valid tach count for stall detection
 
 
 @dataclass
 class FanState:
     """Current state of a single fan channel."""
+
     channel: int
     enabled: bool
     control_mode: ControlMode
@@ -91,6 +99,7 @@ class FanState:
 @dataclass
 class ProductFeatures:
     """EMC2305 product features and capabilities."""
+
     fan_channels: int  # Number of fan channels (typically 5 for EMC2305)
     rpm_control_supported: bool  # RPM-based fan speed control support
     product_id: int  # Product ID (0x34 for EMC2305)
@@ -100,31 +109,37 @@ class ProductFeatures:
 
 class EMC2305Error(Exception):
     """Base exception for EMC2305 driver errors."""
+
     pass
 
 
 class EMC2305DeviceNotFoundError(EMC2305Error):
     """Raised when EMC2305 device is not detected on I2C bus."""
+
     pass
 
 
 class EMC2305ConfigurationError(EMC2305Error):
     """Raised when configuration is invalid or conflicts."""
+
     pass
 
 
 class EMC2305ConfigurationLockedError(EMC2305Error):
     """Raised when attempting to modify locked configuration registers."""
+
     pass
 
 
 class EMC2305CommunicationError(EMC2305Error):
     """Raised when I2C communication fails."""
+
     pass
 
 
 class EMC2305ValidationError(EMC2305Error):
     """Raised when input validation fails."""
+
     pass
 
 
@@ -252,8 +267,12 @@ class EMC2305:
             self._configure_pwm_frequency()
 
             # Set default PWM polarity (normal) and output type (open-drain)
-            self.i2c_bus.write_byte(self.address, const.REG_PWM_POLARITY_CONFIG, const.DEFAULT_PWM_POLARITY)
-            self.i2c_bus.write_byte(self.address, const.REG_PWM_OUTPUT_CONFIG, const.DEFAULT_PWM_OUTPUT_CONFIG)
+            self.i2c_bus.write_byte(
+                self.address, const.REG_PWM_POLARITY_CONFIG, const.DEFAULT_PWM_POLARITY
+            )
+            self.i2c_bus.write_byte(
+                self.address, const.REG_PWM_OUTPUT_CONFIG, const.DEFAULT_PWM_OUTPUT_CONFIG
+            )
 
             # Initialize all fan channels with default configuration
             for channel in range(1, const.NUM_FAN_CHANNELS + 1):
@@ -265,7 +284,7 @@ class EMC2305:
             self.i2c_bus.write_byte(
                 self.address,
                 const.REG_FAN_INTERRUPT_ENABLE,
-                const.FAN_INTERRUPT_ENABLE_ALL_FANS  # Enable fans 1-5 (bits 0-4)
+                const.FAN_INTERRUPT_ENABLE_ALL_FANS,  # Enable fans 1-5 (bits 0-4)
             )
 
             # Clear any existing fault status
@@ -299,8 +318,7 @@ class EMC2305:
         self.i2c_bus.write_byte(self.address, const.REG_PWM_BASE_FREQ_2, freq_code)
 
         logger.info(
-            f"PWM base frequency set to {actual_freq} Hz "
-            f"(requested: {self.pwm_frequency} Hz)"
+            f"PWM base frequency set to {actual_freq} Hz " f"(requested: {self.pwm_frequency} Hz)"
         )
 
     def _configure_fan_registers(self, channel: int, config: FanConfig) -> None:
@@ -320,9 +338,7 @@ class EMC2305:
         # Final PWM frequency = Base Frequency / pwm_divide
         pwm_divide = config.pwm_divide
         if pwm_divide < 1 or pwm_divide > 255:
-            raise EMC2305ValidationError(
-                f"PWM divide must be 1-255, got {pwm_divide}"
-            )
+            raise EMC2305ValidationError(f"PWM divide must be 1-255, got {pwm_divide}")
         if pwm_divide not in const.VALID_PWM_DIVIDES:
             logger.warning(
                 f"Fan {channel}: PWM divide {pwm_divide} is not a standard value. "
@@ -330,9 +346,7 @@ class EMC2305:
             )
 
         self.i2c_bus.write_byte(
-            self.address,
-            base + (const.REG_FAN1_PWM_DIVIDE - const.REG_FAN1_SETTING),
-            pwm_divide
+            self.address, base + (const.REG_FAN1_PWM_DIVIDE - const.REG_FAN1_SETTING), pwm_divide
         )
         logger.debug(f"Fan {channel} PWM divide set to {pwm_divide}")
 
@@ -368,9 +382,7 @@ class EMC2305:
 
         # Write CONFIG1
         self.i2c_bus.write_byte(
-            self.address,
-            base + (const.REG_FAN1_CONFIG1 - const.REG_FAN1_SETTING),
-            config1
+            self.address, base + (const.REG_FAN1_CONFIG1 - const.REG_FAN1_SETTING), config1
         )
 
         # Build CONFIG2 register
@@ -411,9 +423,7 @@ class EMC2305:
 
         # Write CONFIG2
         self.i2c_bus.write_byte(
-            self.address,
-            base + (const.REG_FAN1_CONFIG2 - const.REG_FAN1_SETTING),
-            config2
+            self.address, base + (const.REG_FAN1_CONFIG2 - const.REG_FAN1_SETTING), config2
         )
 
         # Set PID gains
@@ -425,22 +435,30 @@ class EMC2305:
 
         # Integral gain
         i_map = {
-            0: const.GAIN_I_0X, 1: const.GAIN_I_1X, 2: const.GAIN_I_2X,
-            4: const.GAIN_I_4X, 8: const.GAIN_I_8X, 16: const.GAIN_I_16X, 32: const.GAIN_I_32X
+            0: const.GAIN_I_0X,
+            1: const.GAIN_I_1X,
+            2: const.GAIN_I_2X,
+            4: const.GAIN_I_4X,
+            8: const.GAIN_I_8X,
+            16: const.GAIN_I_16X,
+            32: const.GAIN_I_32X,
         }
         gain |= i_map.get(config.pid_gain_i, const.GAIN_I_1X)
 
         # Derivative gain
         d_map = {
-            0: const.GAIN_D_0X, 1: const.GAIN_D_1X, 2: const.GAIN_D_2X,
-            4: const.GAIN_D_4X, 8: const.GAIN_D_8X, 16: const.GAIN_D_16X, 32: const.GAIN_D_32X
+            0: const.GAIN_D_0X,
+            1: const.GAIN_D_1X,
+            2: const.GAIN_D_2X,
+            4: const.GAIN_D_4X,
+            8: const.GAIN_D_8X,
+            16: const.GAIN_D_16X,
+            32: const.GAIN_D_32X,
         }
         gain |= d_map.get(config.pid_gain_d, const.GAIN_D_1X)
 
         self.i2c_bus.write_byte(
-            self.address,
-            base + (const.REG_FAN1_GAIN - const.REG_FAN1_SETTING),
-            gain
+            self.address, base + (const.REG_FAN1_GAIN - const.REG_FAN1_SETTING), gain
         )
 
         # Configure spin-up
@@ -455,24 +473,27 @@ class EMC2305:
             65: const.SPIN_UP_LEVEL_65_PERCENT,
         }
         # Find closest spin-up level
-        closest_level = min(spin_level_map.keys(), key=lambda x: abs(x - config.spin_up_level_percent))
+        closest_level = min(
+            spin_level_map.keys(), key=lambda x: abs(x - config.spin_up_level_percent)
+        )
         spin_config = spin_level_map[closest_level]
 
         # Spin-up time in SPIN_UP_TIME_UNIT_MS units (0-SPIN_UP_TIME_MAX_VALUE)
-        spin_time = min(const.SPIN_UP_TIME_MAX_VALUE, max(0, config.spin_up_time_ms // const.SPIN_UP_TIME_UNIT_MS))
+        spin_time = min(
+            const.SPIN_UP_TIME_MAX_VALUE,
+            max(0, config.spin_up_time_ms // const.SPIN_UP_TIME_UNIT_MS),
+        )
         spin_config |= spin_time
 
         self.i2c_bus.write_byte(
             self.address,
             base + (const.REG_FAN1_SPIN_UP_CONFIG - const.REG_FAN1_SETTING),
-            spin_config
+            spin_config,
         )
 
         # Set maximum step
         self.i2c_bus.write_byte(
-            self.address,
-            base + (const.REG_FAN1_MAX_STEP - const.REG_FAN1_SETTING),
-            config.max_step
+            self.address, base + (const.REG_FAN1_MAX_STEP - const.REG_FAN1_SETTING), config.max_step
         )
 
         # Set minimum drive level
@@ -480,7 +501,7 @@ class EMC2305:
         self.i2c_bus.write_byte(
             self.address,
             base + (const.REG_FAN1_MINIMUM_DRIVE - const.REG_FAN1_SETTING),
-            min_drive_pwm
+            min_drive_pwm,
         )
 
         # Set valid TACH count for stall detection
@@ -489,7 +510,7 @@ class EMC2305:
         self.i2c_bus.write_byte(
             self.address,
             base + (const.REG_FAN1_VALID_TACH_COUNT - const.REG_FAN1_SETTING),
-            valid_tach
+            valid_tach,
         )
 
         # Set Drive Fail Band for aging fan detection
@@ -504,15 +525,17 @@ class EMC2305:
             self.i2c_bus.write_byte(
                 self.address,
                 base + (const.REG_FAN1_DRIVE_FAIL_BAND_LOW - const.REG_FAN1_SETTING),
-                drive_fail_low
+                drive_fail_low,
             )
 
             # Drive Fail Band High Byte (0x3C) - bits 12:8 of count
-            drive_fail_high = (drive_fail_band_count >> const.DRIVE_FAIL_HIGH_SHIFT) & const.DRIVE_FAIL_HIGH_MASK
+            drive_fail_high = (
+                drive_fail_band_count >> const.DRIVE_FAIL_HIGH_SHIFT
+            ) & const.DRIVE_FAIL_HIGH_MASK
             self.i2c_bus.write_byte(
                 self.address,
                 base + (const.REG_FAN1_DRIVE_FAIL_BAND_HIGH - const.REG_FAN1_SETTING),
-                drive_fail_high
+                drive_fail_high,
             )
 
             logger.debug(
@@ -524,12 +547,12 @@ class EMC2305:
             self.i2c_bus.write_byte(
                 self.address,
                 base + (const.REG_FAN1_DRIVE_FAIL_BAND_LOW - const.REG_FAN1_SETTING),
-                0x00
+                0x00,
             )
             self.i2c_bus.write_byte(
                 self.address,
                 base + (const.REG_FAN1_DRIVE_FAIL_BAND_HIGH - const.REG_FAN1_SETTING),
-                0x00
+                0x00,
             )
 
         logger.debug(
@@ -573,20 +596,16 @@ class EMC2305:
         if not 0 <= percent <= 100:
             raise EMC2305ValidationError(f"Percentage must be 0-100, got {percent}")
 
-    def _validate_rpm(self, rpm: int, min_rpm: int = const.MIN_RPM, max_rpm: int = const.MAX_RPM) -> None:
+    def _validate_rpm(
+        self, rpm: int, min_rpm: int = const.MIN_RPM, max_rpm: int = const.MAX_RPM
+    ) -> None:
         """Validate RPM value."""
         if not isinstance(rpm, int):
-            raise EMC2305ValidationError(
-                f"RPM must be an integer, got {type(rpm).__name__}"
-            )
+            raise EMC2305ValidationError(f"RPM must be an integer, got {type(rpm).__name__}")
         if rpm < 0:
-            raise EMC2305ValidationError(
-                f"RPM cannot be negative, got {rpm}"
-            )
+            raise EMC2305ValidationError(f"RPM cannot be negative, got {rpm}")
         if not min_rpm <= rpm <= max_rpm:
-            raise EMC2305ValidationError(
-                f"RPM must be {min_rpm}-{max_rpm}, got {rpm}"
-            )
+            raise EMC2305ValidationError(f"RPM must be {min_rpm}-{max_rpm}, got {rpm}")
 
     def _validate_pid_gain(self, gain: int, valid_gains: list[int], gain_name: str) -> None:
         """Validate PID gain value."""
@@ -617,9 +636,7 @@ class EMC2305:
 
         # Validate max step
         if not 0 <= config.max_step <= 63:
-            raise EMC2305ValidationError(
-                f"max_step must be 0-63, got {config.max_step}"
-            )
+            raise EMC2305ValidationError(f"max_step must be 0-63, got {config.max_step}")
 
         # Validate update time
         valid_update_times = [100, 200, 300, 400, 500, 800, 1200, 1600]
@@ -655,9 +672,7 @@ class EMC2305:
 
         # Validate PWM divide
         if not 1 <= config.pwm_divide <= 255:
-            raise EMC2305ValidationError(
-                f"pwm_divide must be 1-255, got {config.pwm_divide}"
-            )
+            raise EMC2305ValidationError(f"pwm_divide must be 1-255, got {config.pwm_divide}")
 
         # Validate CONFIG2 parameters
         valid_error_ranges = [0, 50, 100, 200]
@@ -845,11 +860,7 @@ class EMC2305:
                 raise EMC2305Error(f"Failed to read PWM for fan {channel}: {e}")
 
     def set_pwm_duty_cycle_verified(
-        self,
-        channel: int,
-        percent: float,
-        tolerance: float = 5.0,
-        retry_count: int = 1
+        self, channel: int, percent: float, tolerance: float = 5.0, retry_count: int = 1
     ) -> tuple[bool, float]:
         """
         Set PWM duty cycle with optional readback verification.
@@ -962,7 +973,11 @@ class EMC2305:
                 reg_high = base + (const.REG_FAN1_TACH_TARGET_HIGH - const.REG_FAN1_SETTING)
 
                 # Write TACH target (13-bit value, MSB first)
-                self.i2c_bus.write_byte(self.address, reg_high, (tach_count >> const.TACH_COUNT_HIGH_SHIFT) & const.TACH_COUNT_HIGH_MASK)
+                self.i2c_bus.write_byte(
+                    self.address,
+                    reg_high,
+                    (tach_count >> const.TACH_COUNT_HIGH_SHIFT) & const.TACH_COUNT_HIGH_MASK,
+                )
                 self.i2c_bus.write_byte(self.address, reg_low, tach_count & const.BYTE_MASK)
 
                 logger.debug(
@@ -996,7 +1011,9 @@ class EMC2305:
                 reg_high = base + (const.REG_FAN1_TACH_TARGET_HIGH - const.REG_FAN1_SETTING)
 
                 # Read TACH target (13-bit value)
-                tach_high = self.i2c_bus.read_byte(self.address, reg_high) & const.TACH_COUNT_HIGH_MASK
+                tach_high = (
+                    self.i2c_bus.read_byte(self.address, reg_high) & const.TACH_COUNT_HIGH_MASK
+                )
                 tach_low = self.i2c_bus.read_byte(self.address, reg_low)
                 tach_count = (tach_high << const.TACH_COUNT_HIGH_SHIFT) | tach_low
 
@@ -1033,7 +1050,9 @@ class EMC2305:
                 reg_high = base + (const.REG_FAN1_TACH_READING_HIGH - const.REG_FAN1_SETTING)
 
                 # Read TACH reading (13-bit value)
-                tach_high = self.i2c_bus.read_byte(self.address, reg_high) & const.TACH_COUNT_HIGH_MASK
+                tach_high = (
+                    self.i2c_bus.read_byte(self.address, reg_high) & const.TACH_COUNT_HIGH_MASK
+                )
                 tach_low = self.i2c_bus.read_byte(self.address, reg_low)
                 tach_count = (tach_high << const.TACH_COUNT_HIGH_SHIFT) | tach_low
 
@@ -1169,7 +1188,9 @@ class EMC2305:
                 enabled=config.enabled,
                 control_mode=config.control_mode,
                 pwm_percent=self.get_pwm_duty_cycle(channel),
-                target_rpm=self.get_target_rpm(channel) if config.control_mode == ControlMode.FSC else 0,
+                target_rpm=(
+                    self.get_target_rpm(channel) if config.control_mode == ControlMode.FSC else 0
+                ),
                 current_rpm=self.get_current_rpm(channel),
                 status=self.get_fan_status(channel),
             )
@@ -1278,14 +1299,10 @@ class EMC2305:
         try:
             # Write SOFTWARE_LOCK_LOCKED_VALUE to lock register (irreversible until reset)
             self.i2c_bus.write_byte(
-                self.address,
-                const.REG_SOFTWARE_LOCK,
-                const.SOFTWARE_LOCK_LOCKED_VALUE
+                self.address, const.REG_SOFTWARE_LOCK, const.SOFTWARE_LOCK_LOCKED_VALUE
             )
             self._is_locked = True
-            logger.warning(
-                "Configuration registers LOCKED - changes disabled until hardware reset"
-            )
+            logger.warning("Configuration registers LOCKED - changes disabled until hardware reset")
         except I2CError as e:
             raise EMC2305Error(f"Failed to lock configuration: {e}")
 
@@ -1303,7 +1320,7 @@ class EMC2305:
         try:
             # Read lock register - SOFTWARE_LOCK_LOCKED_VALUE means locked
             lock_status = self.i2c_bus.read_byte(self.address, const.REG_SOFTWARE_LOCK)
-            self._is_locked = (lock_status == const.SOFTWARE_LOCK_LOCKED_VALUE)
+            self._is_locked = lock_status == const.SOFTWARE_LOCK_LOCKED_VALUE
             return self._is_locked
         except I2CError as e:
             logger.error(f"Failed to read lock status: {e}")
@@ -1400,9 +1417,9 @@ class EMC2305:
 
                     # Channel has alert if any fault condition is active
                     has_fault = (
-                        (stall_status & channel_bit) or
-                        (spin_status & channel_bit) or
-                        (drive_fail_status & channel_bit)
+                        (stall_status & channel_bit)
+                        or (spin_status & channel_bit)
+                        or (drive_fail_status & channel_bit)
                     )
 
                     alerts[channel] = bool(has_fault)
@@ -1436,7 +1453,9 @@ class EMC2305:
 
                 # Fan status bits indicate various conditions that assert ALERT#
                 # Bits 0-4: Per-fan alerts
-                alert_bits = fan_status & const.FAN_INTERRUPT_ENABLE_ALL_FANS  # Check bits 0-4 for fans 1-5
+                alert_bits = (
+                    fan_status & const.FAN_INTERRUPT_ENABLE_ALL_FANS
+                )  # Check bits 0-4 for fans 1-5
 
                 return alert_bits != 0
 
@@ -1488,15 +1507,19 @@ class EMC2305:
         # Set all fans to minimum safe speed
         for channel in range(1, const.NUM_FAN_CHANNELS + 1):
             try:
-                self.set_pwm_duty_cycle(channel, const.SAFE_SHUTDOWN_PWM_PERCENT)  # Safe PWM for controlled shutdown
+                self.set_pwm_duty_cycle(
+                    channel, const.SAFE_SHUTDOWN_PWM_PERCENT
+                )  # Safe PWM for controlled shutdown
             except Exception as e:
                 logger.error(f"Failed to set fan {channel} to safe state: {e}")
 
-    def __enter__(self) -> 'EMC2305':
+    def __enter__(self) -> "EMC2305":
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> bool:
+    def __exit__(
+        self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]
+    ) -> bool:
         """Context manager exit."""
         self.close()
         return False
